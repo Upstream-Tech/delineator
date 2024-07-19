@@ -103,7 +103,7 @@ data as described in steps 1 and 2.
 1. [Edit settings in `config.py`](#step_config)
 1. [Run `subbasins.py` to delineate watersheds](#step_run)
 1. [Review output](#step_review)
-1. [Run again to fix mistakes (repeat steps 4 – 7)](#step_repeat)
+1. [Run again to fix mistakes](#step_repeat)
 
 Before you begin downloading the data in steps 1 and 2, determine which files you need based on your region of interest. 
 The data files are organized into continental-scale river basins, or Pfafstetter Level 2 basins. 
