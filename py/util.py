@@ -14,7 +14,7 @@ import re
 import pickle
 import warnings
 import matplotlib.pyplot as plt
-from config import PICKLE_DIR, OUTPUT_DIR, VERBOSE, OUTPUT_EXT, CATCHMENTS_DIR, PLOTS_DIR
+from config import PICKLE_DIR, OUTPUT_DIR, VERBOSE, OUTPUT_EXT, PLOTS_DIR
 from numpy import random
 
 # The WGS84 projection string, used in a few places
@@ -367,7 +367,6 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple) -> gpd.GeoDataF
         if os.path.isfile(pickle_fname):
             if VERBOSE: print(f"Loading BASIN catchment data from pickle file.")
             gdf = pickle.load(open(pickle_fname, "rb"))
-            breakpoint()
             return gdf
 
     # Open the shapefile for the bounds
