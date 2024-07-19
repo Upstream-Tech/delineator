@@ -376,6 +376,7 @@ def load_gdf(geotype: str, basin: int, high_resolution: bool, bounds: tuple) -> 
         gis_file = "https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/global_flowlines.fgb"
 
     if VERBOSE: print(f"Reading geodata in {gis_file}")
+    # use _read_file_pygrio instead of gpd.read_file b/c it's performing an unneeded check that causes a 403 error 
     gdf = _read_file_pyogrio(gis_file, bbox=bounds)
     # This line is necessary because some of the gis_files provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
