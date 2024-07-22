@@ -18,7 +18,7 @@ from py.raster_plots import plot_mask, plot_accum, plot_flowdir, plot_streams, p
 from py.util import get_largest
 
 FLOW_DIR_PATH = 'https://public-hydrology-data.upstream.tech/merit_flowdir.tif'
-
+ACCUM_PATH = 'https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/merit_accum.tif'
 
 def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly: Polygon,
                     bSingleCatchment: bool) -> (object or None, float, float):
@@ -157,7 +157,7 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
     # if VERBOSE: print("Snapping pour point")
 
     # Open the accumulation raster, again using windowed reading mode.
-    acc = grid.read_raster('https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/merit_accum.tif', data_name="acc", window=bounding_box, window_crs=grid.crs, nodata=0)
+    acc = grid.read_raster(ACCUM_PATH, data_name="acc", window=bounding_box, window_crs=grid.crs, nodata=0)
 
     # MASK the accumulation raster to the unit catchment POLYGON. Set any pixel that is not
     # in 'mymask' to zero. That way, the pour point will always snap to a grid cell that is
