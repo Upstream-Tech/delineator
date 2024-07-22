@@ -19,8 +19,11 @@ from numpy import random
 
 # The WGS84 projection string, used in a few places
 PROJ_WGS84 = 'EPSG:4326'
-CATCHMENT_PATH = "https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/global_catchments.fgb"
-RIVER_PATH = "https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/global_flowlines.fgb"
+CATCHMENT_PATH = os.getenv("CATCHMENT_PATH")
+assert CATCHMENT_PATH
+RIVER_PATH = os.getenv("RIVER_PATH")
+assert RIVER_PATH
+
 
 # Regular expression used to find numbers so I can round lat, lng coordinates in GeoJSON files to make them smaller
 simpledec = re.compile(r"\d*\.\d+")

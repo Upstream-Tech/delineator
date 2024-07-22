@@ -17,8 +17,10 @@ from config import *
 from py.raster_plots import plot_mask, plot_accum, plot_flowdir, plot_streams, plot_clipped, plot_polys
 from py.util import get_largest
 
-FLOW_DIR_PATH = 'https://public-hydrology-data.upstream.tech/merit_flowdir.tif'
-ACCUM_PATH = 'https://pub-5f26e013d22e454ea079891d13f905f1.r2.dev/merit_accum.tif'
+FLOW_DIR_PATH = os.getenv("FLOW_DIR_PATH")
+assert FLOW_DIR_PATH
+ACCUM_PATH = os.getenv("ACCUM_PATH")
+assert ACCUM_PATH
 
 def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly: Polygon,
                     bSingleCatchment: bool) -> (object or None, float, float):
