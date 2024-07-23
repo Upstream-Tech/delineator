@@ -6,6 +6,5 @@ build-backend = "hatchling.build"
 name = "upstream-delineator"
 version = "0.1.0"
 description = "Delineate basins"
-dynamic = ["version"]
 
 [tool]
