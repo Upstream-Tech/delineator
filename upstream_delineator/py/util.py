@@ -258,7 +258,7 @@ def load_megabasins() -> gpd.GeoDataFrame:
     else:
         # This file has the merged "megabasins_gdf" in it
         if VERBOSE: print("Reading Megabasins shapefile")
-        merit_basins_shp = 'data/shp/basins_level2/merit_hydro_vect_level2.shp'
+        merit_basins_shp = 'upstream_delineator/data/shp/basins_level2/merit_hydro_vect_level2.shp'
         megabasins_gdf = gpd.read_file(merit_basins_shp)
 
         # The CRS string in the shapefile is EPSG 4326 but does not match verbatim, so set it here
