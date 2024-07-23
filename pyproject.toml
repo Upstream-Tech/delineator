@@ -3,6 +3,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
+dependencies = [
+    "geopandas==1.0.0",
+    "graphviz==0.20.3",
+    "matplotlib==3.8.4",
+    "networkx==3.3",
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+    "pillow==10.3.0",
+    "pyproj==3.6.1",
+    "pysheds==0.4",
+    "scipy==1.13.0",
+    "shapely==2.0.4",
+    "topojson~=1.9",
+]
 name = "upstream_delineator"
 version = "0.1.1"
 description = "Delineate basins"
