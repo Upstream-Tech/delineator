@@ -3,12 +3,6 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "upstream-delineator"
+name = "upstream_delineator"
 version = "0.1.1"
 description = "Delineate basins"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
-
-[tool.flit.module]
-name = "upstream_delineator"
