@@ -8,4 +8,4 @@ version = "0.1.0"
 description = "Delineate basins"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/subbasins", "py"]
+packages = ["src"]
