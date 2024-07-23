@@ -23,6 +23,8 @@ CATCHMENT_PATH = os.getenv("CATCHMENT_PATH")
 assert CATCHMENT_PATH
 RIVER_PATH = os.getenv("RIVER_PATH")
 assert RIVER_PATH
+MERIT_LEVEL_2_PATH = os.getenv("MERIT_LEVEL_2_PATH")
+assert MERIT_LEVEL_2_PATH
 
 
 # Regular expression used to find numbers so I can round lat, lng coordinates in GeoJSON files to make them smaller
@@ -258,7 +260,7 @@ def load_megabasins() -> gpd.GeoDataFrame:
     else:
         # This file has the merged "megabasins_gdf" in it
         if VERBOSE: print("Reading Megabasins shapefile")
-        merit_basins_shp = 'upstream_delineator/data/shp/basins_level2/merit_hydro_vect_level2.shp'
+        merit_basins_shp = MERIT_LEVEL_2_PATH
         megabasins_gdf = gpd.read_file(merit_basins_shp)
 
         # The CRS string in the shapefile is EPSG 4326 but does not match verbatim, so set it here
