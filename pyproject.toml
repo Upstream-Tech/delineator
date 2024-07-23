@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "upstream-delineator"
+name = "upstream_delineator"
 version = "0.1.0"
 description = "Delineate basins"
 
