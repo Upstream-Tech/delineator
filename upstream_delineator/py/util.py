@@ -510,18 +510,19 @@ def save_network(G: networkx.Graph, prefix: str, file_ext: str):
 
     filename = f"{OUTPUT_DIR}/{prefix}_graph.{file_ext}"
 
-    match file_ext:
-        case 'pkl':
-            # (1) Python pickle file
-            pickle.dump(G, open(filename, "wb"))
-        case 'json':
-            # (2) JSON file
-            data = networkx.node_link_data(G)
-            with open(filename, "w") as f:
-                json.dump(data, f)
-        case 'gml':
-            # (3) GML (Graph Modeling Language), a common graph file format.
-            networkx.write_gml(G, filename)
-        case 'xml':
-            # (4) GraphML is an XML-based file format for graphs.
-            networkx.write_graphml(G, filename)
+    if file_ext == 'pkl':
+        # (1) Python pickle file
+        pickle.dump(G, open(filename, "wb"))
+    elif file_ext == 'json':
+        # (2) JSON file
+        data = networkx.node_link_data(G)
+        with open(filename, "w") as f:
+            json.dump(data, f)
+    elif file_ext == 'gml':
+        # (3) GML (Graph Modeling Language), a common graph file format.
+        networkx.write_gml(G, filename)
+    elif file_ext == 'xml':
+        # (4) GraphML is an XML-based file format for graphs.
+        networkx.write_graphml(G, filename)
+    else:
+        raise ValueError(f'Unhandled file extension {file_ext}')
