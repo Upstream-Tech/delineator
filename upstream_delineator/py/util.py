@@ -14,7 +14,7 @@ import re
 import pickle
 import warnings
 import matplotlib.pyplot as plt
-from config import PICKLE_DIR, OUTPUT_DIR, VERBOSE, OUTPUT_EXT, PLOTS_DIR
+from upstream_delineator.config import PICKLE_DIR, OUTPUT_DIR, VERBOSE, OUTPUT_EXT, PLOTS_DIR
 from numpy import random
 
 # The WGS84 projection string, used in a few places
