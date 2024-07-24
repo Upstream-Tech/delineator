@@ -738,7 +738,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.path.insert(0, ".")
+    # sys.path.insert(0, ".")
     if len(sys.argv) > 1:
         # Run with command-line arguments
         _run_from_terminal()
