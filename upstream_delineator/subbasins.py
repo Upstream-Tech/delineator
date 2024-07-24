@@ -25,7 +25,6 @@ or in Python as follows:
 # Standard Python libraries. See requirements.txt for recommended versions.
 import argparse
 import sys
-sys.path.insert(0, ".")
 from shapely.geometry import Point
 import topojson
 import warnings
@@ -739,6 +738,7 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, ".")
     if len(sys.argv) > 1:
         # Run with command-line arguments
         _run_from_terminal()
