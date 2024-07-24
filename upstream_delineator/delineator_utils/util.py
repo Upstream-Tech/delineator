@@ -263,7 +263,7 @@ def load_megabasins() -> gpd.GeoDataFrame:
         # This file has the merged "megabasins_gdf" in it
         if config.get("VERBOSE"): print("Reading Megabasins shapefile")
         merit_basins_shp = MEGABASINS_PATH
-        megabasins_gdf = gpd.read_file(merit_basins_shp)
+        megabasins_gdf =_read_file_pyogrio(merit_basins_shp)
 
         # The CRS string in the shapefile is EPSG 4326 but does not match verbatim, so set it here
         megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
