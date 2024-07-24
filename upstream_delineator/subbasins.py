@@ -30,15 +30,15 @@ import topojson
 import warnings
 
 # My stuff
-from py.consolidate import consolidate_network, show_area_stats
-from py.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
+from delineator_utils.consolidate import consolidate_network, show_area_stats
+from delineator_utils.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
     find_repeated_elements, fix_polygon, calc_length, validate, save_network, \
     write_geodata, PROJ_WGS84  # Contains a bunch of functions
-from py.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
+from delineator_utils.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
     prune_node, upstream_nodes  # Functions for working with river network information as a Python NetworkX graph
-from py.merit_detailed import split_catchment
-from py.plot_network import draw_graph
-from py.fast_dissolve import dissolve_geopandas, buffer, close_holes
+from delineator_utils.merit_detailed import split_catchment
+from delineator_utils.plot_network import draw_graph
+from delineator_utils.fast_dissolve import dissolve_geopandas, buffer, close_holes
 from shapely.ops import unary_union
 import config
 
