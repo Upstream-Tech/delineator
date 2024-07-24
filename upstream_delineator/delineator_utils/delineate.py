@@ -23,8 +23,6 @@ or in Python as follows:
 """
 
 # Standard Python libraries. See requirements.txt for recommended versions.
-import argparse
-import sys
 from shapely.geometry import Point
 import topojson
 import warnings
@@ -707,40 +705,3 @@ def create_watersheds(G, gages_list, subbasins_gdf):
         write_geodata(watershed_gdf, fname)
 
 
-def _run_from_terminal():
-    """
-    Routine which is run when you call subbasins.py from the command line.
-    should be run like:
-    python subbasins.py outlets.csv run_name
-    """
-    # Create the parser for command line inputs.
-    description = "Delineate subbasins using data in and input CSV file. Writes " \
-        "a set of output files beginning with the output prefix string."
-
-    parser = argparse.ArgumentParser(description=description)
-
-    # Add the arguments
-    parser.add_argument('input_csv', help="Input CSV filename, for example 'gages.csv'")
-    parser.add_argument('output_prefix', help="Output prefix, a string. The output files will start with this string")
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-    # Call the main function, passing the command line arguments
-    delineate(args.input_csv, args.output_prefix)
-
-
-def main():
-    # Run directly, for convenience or during development and debugging
-    input_csv = 'outlets.csv'
-    out_prefix = 'iceland'
-    delineate(input_csv, out_prefix)
-
-
-if __name__ == "__main__":
-    sys.path.insert(0, ".")
-    if len(sys.argv) > 1:
-        # Run with command-line arguments
-        _run_from_terminal()
-    else:
-        main()
