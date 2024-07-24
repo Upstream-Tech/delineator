@@ -25,22 +25,23 @@ or in Python as follows:
 # Standard Python libraries. See requirements.txt for recommended versions.
 import argparse
 import sys
+sys.path.insert(0, ".")
 from shapely.geometry import Point
 import topojson
 import warnings
 
 # My stuff
-from delineator_utils.consolidate import consolidate_network, show_area_stats
-from delineator_utils.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
+from upstream_delineator.delineator_utils.consolidate import consolidate_network, show_area_stats
+from upstream_delineator.delineator_utils.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
     find_repeated_elements, fix_polygon, calc_length, validate, save_network, \
     write_geodata, PROJ_WGS84  # Contains a bunch of functions
-from delineator_utils.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
+from upstream_delineator.delineator_utils.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
     prune_node, upstream_nodes  # Functions for working with river network information as a Python NetworkX graph
-from delineator_utils.merit_detailed import split_catchment
-from delineator_utils.plot_network import draw_graph
-from delineator_utils.fast_dissolve import dissolve_geopandas, buffer, close_holes
+from upstream_delineator.delineator_utils.merit_detailed import split_catchment
+from upstream_delineator.delineator_utils.plot_network import draw_graph
+from upstream_delineator.delineator_utils.fast_dissolve import dissolve_geopandas, buffer, close_holes
 from shapely.ops import unary_union
-import config
+from upstream_delineator import config
 
 from os.path import isfile
 import geopandas as gpd

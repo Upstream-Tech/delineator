@@ -17,7 +17,7 @@ import warnings
 import matplotlib.pyplot as plt
 from numpy import random
 
-import config
+from upstream_delineator import config
 
 # The WGS84 projection string, used in a few places
 PROJ_WGS84 = 'EPSG:4326'
