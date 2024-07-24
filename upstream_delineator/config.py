@@ -9,6 +9,16 @@ outside of the sample data provided for Iceland.
 
 """
 
+# TODO: add default vals if any (just throw the stuff in from below)
+_GLOBAL_CONFIG = {}
+
+def get(val: str):
+  pass 
+
+def set(config_vals: dict) -> None:
+  # TODO: add validation if there are required vals
+  _GLOBAL_CONFIG.update(config_vals)
+
 # Set to True if you want the script to write status messages to the console
 VERBOSE = True
 
