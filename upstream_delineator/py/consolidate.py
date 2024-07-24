@@ -2,10 +2,10 @@
 
 import pickle
 import networkx as nx
-from upstream_delineator.py.plot_network import draw_graph
-from upstream_delineator.py.graph_tools import calculate_shreve_stream_order, calculate_strahler_stream_order, prune_node
+from py.plot_network import draw_graph
+from py.graph_tools import calculate_shreve_stream_order, calculate_strahler_stream_order, prune_node
 import numpy as np
-from upstream_delineator.config import VERBOSE
+import config
 from scipy.stats import skew
 import matplotlib.pyplot as plt
 from typing import Tuple
@@ -348,7 +348,7 @@ def consolidate_network(G: nx.DiGraph, threshold_area: float or int) -> Tuple[nx
     rivers2delete = []
 
     if DRAW_NET_DIAGRAM: draw_graph(G, filename='plots/test_net', title="Original Network")
-    if VERBOSE:
+    if config.get("VERBOSE"):
         print(f"Consolidating river network. Max. subbasin area: {threshold_area}")
         print('Iteration #1')
 
@@ -373,7 +373,7 @@ def consolidate_network(G: nx.DiGraph, threshold_area: float or int) -> Tuple[nx
         G, MERGES, rivers2merge, rivers2delete = prune_leaves(G, threshold_area, MERGES, rivers2merge, rivers2delete)
         num_nodes = G.number_of_nodes()
         i += 1
-        if VERBOSE: print(f"Iteration #{i}")
+        if config.get("VERBOSE"): print(f"Iteration #{i}")
 
         # When there is no change in the number of nodes, we have converged on a solution and can stop iterating
         if num_nodes == previous_num_nodes:
@@ -383,7 +383,7 @@ def consolidate_network(G: nx.DiGraph, threshold_area: float or int) -> Tuple[nx
     G, MERGES, rivers2merge = last_merge(G, threshold_area, MERGES, rivers2merge)
 
     if DRAW_NET_DIAGRAM:  draw_graph(G, filename='plots/test_step5', title="After iteration, Step 5")
-    if VERBOSE: show_area_stats(G)
+    if config.get("VERBOSE"): show_area_stats(G)
 
     return G, MERGES, rivers2merge, rivers2delete
 

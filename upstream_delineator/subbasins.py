@@ -30,17 +30,17 @@ import topojson
 import warnings
 
 # My stuff
-from upstream_delineator.py.consolidate import consolidate_network, show_area_stats
-from upstream_delineator.py.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
+from py.consolidate import consolidate_network, show_area_stats
+from py.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
     find_repeated_elements, fix_polygon, calc_length, validate, save_network, \
     write_geodata, PROJ_WGS84  # Contains a bunch of functions
-from upstream_delineator.py.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
+from py.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
     prune_node, upstream_nodes  # Functions for working with river network information as a Python NetworkX graph
-from upstream_delineator.py.merit_detailed import split_catchment
-from upstream_delineator.py.plot_network import draw_graph
-from upstream_delineator.py.fast_dissolve import dissolve_geopandas, buffer, close_holes
+from py.merit_detailed import split_catchment
+from py.plot_network import draw_graph
+from py.fast_dissolve import dissolve_geopandas, buffer, close_holes
 from shapely.ops import unary_union
-from upstream_delineator import config
+import config
 
 from os.path import isfile
 import geopandas as gpd
@@ -85,7 +85,7 @@ options:
     - this could be a pydantic class we define or a superclass that clients import and make instances of to enforce fields 
 '''
 
-def delineate(input_csv: str, output_prefix: str, config_vals: dict):
+def delineate(input_csv: str, output_prefix: str, config_vals: dict = None):
     """
     Finds the watershed for a set of outlets.
     Make sure to set the variables in `config.py` before running.
@@ -102,7 +102,8 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict):
     (including the watershed id, names, and areas).
 
     """
-    config.set(config_vals)
+    if config_vals:
+        config.set(config_vals)
 
     # Make sure the user folders from `config.py` exist (for output & plots). If not create them.
     make_folders()
@@ -166,8 +167,7 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict):
     if config.get("NETWORK_DIAGRAMS"):
         draw_graph(G, f'plots/{output_prefix}_network_final')
 
-    if config.get("VERBOSE"):
-        print("Ran succesfully!")
+    print("Ran successfully!")
 
 
 def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, rivers_gdf):
@@ -660,17 +660,17 @@ def write_outputs(G, myrivers_gdf, subbasins_gdf, gages_list, output_prefix):
     # Save the GEODATA for (1) subbasins, (2) outlets, and (3) rivers
 
     # (1) SUBBASINS
-    fname = f"{config.get("OUTPUT_DIR")}/{output_prefix}_subbasins.{config.get("OUTPUT_EXT")}"
+    fname = f'{config.get("OUTPUT_DIR")}/{output_prefix}_subbasins.{config.get("OUTPUT_EXT")}'
     write_geodata(subbasins_gdf, fname)
 
     # (2) Get the OUTLETS data and write it to disk
     outlets_gdf = subbasins_gdf.copy()
     outlets_gdf['geometry'] = outlets_gdf.apply(lambda row: Point(row['lng'], row['lat']), axis=1)
-    fname = f"{config.get("OUTPUT_DIR")}/{output_prefix}_outlets.{config.get("OUTPUT_EXT")}"
+    fname = f'{config.get("OUTPUT_DIR")}/{output_prefix}_outlets.{config.get("OUTPUT_EXT")}'
     write_geodata(outlets_gdf, fname)
 
     # (3) Write the RIVERS data to disk.
-    fname = f"{config.get("OUTPUT_DIR")}/{output_prefix}_rivers.{config.get("OUTPUT_EXT")}"
+    fname = f'{config.get("OUTPUT_DIR")}/{output_prefix}_rivers.{config.get("OUTPUT_EXT")}'
     write_geodata(myrivers_gdf, fname)
 
     # Finally, return the larger watersheds for each outlet point, if desired
@@ -703,7 +703,7 @@ def create_watersheds(G, gages_list, subbasins_gdf):
         if config.get("FILL"):
             watershed_gdf.geometry = watershed_gdf.geometry.apply(lambda p: close_holes(p, FILL_AREA_MAX))
 
-        fname = f"{config.get("OUTPUT_DIR")}/wshed_{node}.{config.get("OUTPUT_EXT")}"
+        fname = f'{config.get("OUTPUT_DIR")}/wshed_{node}.{config.get("OUTPUT_EXT")}'
         write_geodata(watershed_gdf, fname)
 
 
