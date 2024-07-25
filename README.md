@@ -91,7 +91,7 @@ data as described in steps 1 and 2.
 1. [Export env vars pointing to raster and vector data](#step_env)
 1. [Create a CSV file with your desired watershed outlet points](#step_csv)
 1. [Override config defaults](#step_config)
-1. [Run `subbasins.py` to delineate watersheds](#step_run)
+1. [Delineate watersheds](#step_run)
 1. [Review output](#step_review)
 1. [Run again to fix mistakes](#step_repeat)
 
@@ -179,16 +179,17 @@ graph, subbasins_gdf, rivers_gdf = delineate(
 )
 ```
 
-## <a name="step_run">Run `subbasins.py` to delineate watersheds</a>
+## <a name="step_run">Delineate watersheds</a>
 
-The script takes two arguments:
+Delineation can be run from the command line, or from Python. Either way, you will need to specify a few arguments:
 
-`input_csv` - Input CSV filename, for example `outlets.csv`
-
-`output_prefix` - Output prefix, a string. The output files will start with this string. For example, 
+- `input_csv` (required) - Input CSV filename, for example `outlets.csv`
+- `output_prefix` (required) - Output prefix, a string. The output files will start with this string. For 
+example, 
 if you provide 'shasta', the script will produce `shasta_subbasins.shp`, `shasta_outlets.shp`, etc.
+- `config_overrides` (optional, Python-only) - A dictionary of overrides. Eg to turn `VERBOSE` logging on or off.
 
-Run the script from the command line like this:
+You can run the script from the command line like this:
 
 ``` bash
 python upstream_delineator/scripts/subbasins.py /path/to/file/outlets.csv shasta
