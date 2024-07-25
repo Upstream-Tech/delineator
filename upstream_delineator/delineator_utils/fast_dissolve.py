@@ -19,7 +19,7 @@ with my watershed boundaries.
 
 import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
-gpd.options.use_pygeos = True
+# gpd.options.use_pygeos = True
 
 
 def buffer(poly: Polygon) -> Polygon:
