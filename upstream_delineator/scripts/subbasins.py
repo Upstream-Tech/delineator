@@ -26,12 +26,13 @@ or in Python as follows:
 import argparse
 import sys
 sys.path.insert(0, ".")
+import inspect
 
 # My stuff
 from upstream_delineator.delineator_utils.delineate import delineate
 
 
-def _run_from_terminal():
+def run():
     """
     Routine which is run when you call subbasins.py from the command line.
     should be run like:
@@ -62,8 +63,17 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Run with command-line arguments
-        _run_from_terminal()
-    else:
-        main()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("--org-id", required=True)
+    argparser.add_argument(
+        "input_csv",
+        help="CSV of outlets to delineate.",
+    )
+    argparser.add_argument(
+        "output_prefix",
+        help="Prefix for output files from this run.",
+    )
+    args = argparser.parse_args()
+    parameters = inspect.signature(run).parameters
+    kwargs = {k: v for k, v in vars(args).items() if k in parameters}
+    run(**kwargs)
