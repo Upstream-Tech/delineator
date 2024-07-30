@@ -269,8 +269,7 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
         megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
 
         # Check that data is well-formed 
-        for basin in megabasins_gdf.BASIN:
-            assert 11 <= basin <= 91
+        ((11 <= megabasins_gdf.BASIN) & (megabasins_gdf.BASIN <= 91)).all()
 
         # Try saving to a pickle file for future speedups
         if len(config.get("PICKLE_DIR")) > 0:
