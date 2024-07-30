@@ -6,6 +6,7 @@ from functools import partial
 import networkx
 import pyproj
 import shapely
+from shapely.ops import unary_union
 from geopandas import GeoDataFrame
 from geopandas.io.file import _read_file_pyogrio
 from shapely.geometry import MultiPolygon, Polygon, LineString
@@ -242,7 +243,7 @@ def calc_length(line: LineString) -> float:
     return projected_line.length / 1e3
 
 
-def load_megabasins() -> gpd.GeoDataFrame:
+def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     """
     Reads the "megabasin" data from disk and returns a GeoDataFrame.
     The program uses this data to determine what dataset is needed for analyses.
@@ -263,12 +264,13 @@ def load_megabasins() -> gpd.GeoDataFrame:
         # This file has the merged "megabasins_gdf" in it
         if config.get("VERBOSE"): print("Reading Megabasins shapefile")
         merit_basins_shp = MEGABASINS_PATH
-        megabasins_gdf =_read_file_pyogrio(merit_basins_shp)
+        megabasins_gdf =_read_file_pyogrio(merit_basins_shp, bbox=bounds)
 
         # The CRS string in the shapefile is EPSG 4326 but does not match verbatim, so set it here
         megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
-        if megabasins_gdf.loc[0].BASIN != 11:
-            raise Exception("An error occurred loading the Level 2 basins shapefile")
+        # TODO: change check that the BASINS fall between 11 and 91 
+        # if megabasins_gdf.loc[0].BASIN != 11:
+        #     raise Exception("An error occurred loading the Level 2 basins shapefile")
 
         # Try saving to a pickle file for future speedups
         if len(config.get("PICKLE_DIR")) > 0:
@@ -288,8 +290,8 @@ def get_megabasins(points_gdf: GeoDataFrame) -> dict:
         A dictionary, keys are the unique megabasins: integers from 11 to 91.
         Values are lists of outlet points (type is variable, whatever the user entered in the input CSV file)
     """
-
-    megabasins_gdf = load_megabasins()
+    all_points = unary_union(points_gdf['geometry'])
+    megabasins_gdf = load_megabasins(all_points.bounds)
     if config.get("VERBOSE"): print("Finding out which Pfafstetter Level 2 'megabasin' your outlets are in")
 
     # Overlay the gage points on the Level 2 Basins polygons to find out which
