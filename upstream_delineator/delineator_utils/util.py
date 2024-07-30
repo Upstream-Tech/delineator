@@ -253,29 +253,13 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     If the .pkl does not exist, create it for faster processing in the future,
     since reading flatgeobuf files is slow.
     """
+    megabasins_gdf = load_gdf("megabasins", True, bounds)
 
-    # Check whether the pickle file exists
-    pickle_fname = f'{config.get("PICKLE_DIR")}/megabasins.pkl'
-    if os.path.isfile(pickle_fname):
-        if config.get("VERBOSE"): print("Loading Megabasins from Pickle File")
-        gdf = pickle.load(open(pickle_fname, "rb"))
-        return gdf
-    else:
-        # This file has the merged "megabasins_gdf" in it
-        if config.get("VERBOSE"): print(f"Reading megabasins data in {MEGABASINS_PATH}")
-        megabasins_gdf =_read_file_pyogrio(MEGABASINS_PATH, bbox=bounds)
+    # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
+    megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
 
-        # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
-        megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
-
-        # Check that data is well-formed 
-        ((11 <= megabasins_gdf.BASIN) & (megabasins_gdf.BASIN <= 91)).all()
-
-        # Try saving to a pickle file for future speedups
-        if len(config.get("PICKLE_DIR")) > 0:
-            # Recall that the latest versions of GeoPandas create spatial indices automatically
-            if config.get("VERBOSE"): print("Saving megabasins GeoDataFrame to pickle file.")
-            pickle.dump(megabasins_gdf, open(pickle_fname, "wb"))
+    # Check that data is well-formed 
+    ((11 <= megabasins_gdf.BASIN) & (megabasins_gdf.BASIN <= 91)).all()
 
     return megabasins_gdf
 
@@ -355,7 +339,7 @@ def get_pickle_filename(geotype: str, bounds: tuple, high_resolution: bool) -> s
     return fname
 
 
-def load_gdf(geotype: str, high_resolution: bool, bounds: tuple) -> gpd.GeoDataFrame:
+def load_gdf(geotype: str, high_resolution: bool, bounds: tuple[float]) -> gpd.GeoDataFrame:
     """
     Returns the unit catchments vector polygon dataset as a GeoDataFrame
     Gets the data from the MERIT-Basins flatgeobuf file the first time,
@@ -363,10 +347,10 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple) -> gpd.GeoDataF
     Uses some global parameters from config.py
 
     :param geotype: either "catchments" or "rivers" depending on which one we want to open.
-    :param basin: the Pfafstetter level 2 megabasin, an integer from 11 to 91
     :param high_resolution: True to load the standard (high-resolution) file,
       False to load the low-resolution version (for faster processing, slightly less accurate results)
-
+    :param bounds: tuple of floats representing a bounding box.
+      
     :return: a GeoPandas GeoDataFrame
 
     """
@@ -383,6 +367,8 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple) -> gpd.GeoDataF
         gis_path = CATCHMENT_PATH
     elif geotype == "rivers":
         gis_path = RIVER_PATH
+    elif geotype == "megabasins":
+        gis_path = MEGABASINS_PATH
 
     if config.get("VERBOSE"): print(f"Reading geodata in {gis_path}")
     # use _read_file_pygrio instead of gpd.read_file b/c it's performing an unneeded check that causes a 403 error 
