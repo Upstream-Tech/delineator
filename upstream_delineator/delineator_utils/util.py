@@ -380,7 +380,6 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple) -> gpd.GeoDataF
             gdf = pickle.load(open(pickle_fname, "rb"))
             return gdf
 
-    # Open the flatgeobuf file for the bounds
     if geotype == "catchments":
         gis_path = CATCHMENT_PATH
     elif geotype == "rivers":
