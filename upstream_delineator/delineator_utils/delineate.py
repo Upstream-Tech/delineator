@@ -109,8 +109,6 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None):
     # Read the outlet points CSV file and put the data into a Pandas DataFrame
     # (I call the outlet points gages, because I usually in delineated watersheds at streamflow gages)
     gages_gdf = make_gages_gdf(input_csv)
-    if (gages_gdf["id"] == 0).any():
-        raise ValueError("id of 0 not allowed in input csv")
 
     # Create a filtered version with only the *outlets*
     outlets_gdf = gages_gdf[gages_gdf['is_outlet'] == True]
