@@ -218,7 +218,7 @@ def prune_leaves(G: nx.DiGraph,
     for leaf in leaves:
         if G.has_node(leaf):
             successors = list(G.successors(leaf))
-            if len (successors) == 0:
+            if len(successors) == 0:
                 continue
             neighbors = list(G.predecessors(successors[0]))
             if len(neighbors) == 2:

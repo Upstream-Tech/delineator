@@ -156,7 +156,9 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None):
                 G = wshed_G
                 subbasins_gdf = wshed_subbasins_gdf
                 myrivers_gdf = wshed_rivers_gdf
-
+    
+    if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, f"{output_prefix}_basins")
+    
     # Finally, write the results to disk
     gages_list = gages_gdf['id'].tolist()
     if config.get("WRITE_OUTPUT"):
@@ -266,7 +268,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     subbasins_gdf['nextdown'] = subbasins_gdf['nextdown'].astype(int)
     subbasins_gdf['custom'] = False  # Adds a column that shows whether a subbasin is connected to a custom pour point
 
-    if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, 'before')
+    # if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, 'before')
 
     # For debugging mostly
     # G = make_river_network(subbasins_gdf, terminal_comid)

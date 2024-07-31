@@ -58,7 +58,7 @@ def draw_graph(G: nx.DiGraph, filename: str, title="River Network Graph"):
         if G.nodes[node].get('custom'):
             dot.node(str(node), label=label, style='filled', fillcolor='lightblue', fontname='Arial')
         else:
-            dot.node(str(node), label=label, fontname='Arial')
+            dot.node(str(node), label=label)
 
     # Add edges
     for u, v in G.edges():
