@@ -9,8 +9,7 @@ import numpy as np
 import geopandas as gpd
 
 
-font = {'family': 'Arial',
-        'weight': 'normal',
+font = {'weight': 'normal',
         'size': 18}
 
 rc('font', **font)
