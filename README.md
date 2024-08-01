@@ -90,7 +90,6 @@ data as described in steps 1 and 2.
 
 1. [Export env vars pointing to raster and vector data](#step_env)
 1. [Create a CSV file with your desired watershed outlet points](#step_csv)
-1. [Override config defaults](#step_config)
 1. [Delineate watersheds](#step_run)
 1. [Review output](#step_review)
 1. [Run again to fix mistakes](#step_repeat)
@@ -169,16 +168,6 @@ All latitude and longitude coordinates should be in decimal degrees
 In this example, there are two *main* outlets. The first, "foz-tua," has two subbasin
 outlets. The second, "baixo-sabor," has one subbasin outlet. 
 
-## <a name="step_config">Override config defaults</a>
-
-Read through the options in `config.py`, then override any variables as you wish. 
-
-``` python
-graph, subbasins_gdf, rivers_gdf = delineate(
-    csv_filename, output_prefix, {"WRITE_OUTPUT": True, "NETWORK_DIAGRAMS": True}
-)
-```
-
 ## <a name="step_run">Delineate watersheds</a>
 
 Delineation can be run from the command line, or from Python. Either way, you will need to specify a few arguments:
@@ -187,19 +176,19 @@ Delineation can be run from the command line, or from Python. Either way, you wi
 - `output_prefix` (required) - Output prefix, a string. The output files will start with this string. For 
 example, 
 if you provide 'shasta', the script will produce `shasta_subbasins.shp`, `shasta_outlets.shp`, etc.
-- `config_overrides` (optional, Python-only) - A dictionary of overrides. Eg to turn `VERBOSE` logging on or off.
+- `config_vals` (optional) - Override default settings. Eg to turn `VERBOSE` logging on or off.
 
 You can run the script from the command line like this:
 
 ``` bash
-python upstream_delineator/scripts/subbasins.py /path/to/file/outlets.csv shasta
+python upstream_delineator/scripts/subbasins.py /path/to/file/outlets.csv shasta --PLOTS --NO_VERBOSE --MAX_AREA 250
 ```
 
 Alternatively, you can call the delineation routine from Python:
 
 ``` python
 >> from upstream_delineator.delineator_utils.delineate import delineate
->> delineate('/path/to/file/outlets.csv', 'shasta')
+>> delineate('/path/to/file/outlets.csv', 'shasta', {"PLOTS": True, "VERBOSE": False, "MAX_AREA": 250})
 ```
 
 ## <a name="step_review">Review results</a>
