@@ -131,7 +131,7 @@ def validate(gages_df: pd.DataFrame) -> bool:
 
     """
     cols = gages_df.columns
-    required_cols = ['id', 'lat', 'lng', 'is_outlet']
+    required_cols = ['id', 'lat', 'lng', 'outlet_id']
     for col in required_cols:
         if col not in cols:
             raise ValueError(f"Missing column in CSV file: {col}")
@@ -169,22 +169,20 @@ def validate(gages_df: pd.DataFrame) -> bool:
         raise ValueError("Every watershed outlet must have an id in the CSV file")
     
     # Check that all ids are valid 
-    if (gages_df["id"].astype(str) == "0").any():
+    gages_df['id'] = gages_df['id'].astype(str)
+    if (gages_df["id"] == "0").any():
         raise ValueError("id of 0 not allowed in input csv")
 
     # Check that the ids are unique. We cannot have duplicate ids, because they are used as the index in DataFrames
     if not has_unique_elements(ids):
         raise ValueError("Outlet ids must be unique. No duplicates are allowed!")
 
-    # Check that `is_outlet` is boolean
-    is_outlet_type = gages_df['is_outlet'][0]
-    if is_outlet_type != 'bool':
-        if is_outlet_type == 'O':
-            vals = gages_df['id'].unique()
-            if True not in vals:
-                raise ValueError("The field `is_outlet` must be boolean (true/false)")
-    else:
-        raise ValueError("The field `is_outlet` must be boolean (true/false)")
+    # Check that `outlet_id` references outlet contained in CSV
+    gages_df['outlet_id'] = gages_df['outlet_id'].astype(str)
+    outlet_ids = set(gages_df['outlet_id'])
+    ids = set(ids)
+    if not outlet_ids.issubset(ids):
+        raise ValueError("outlet_id's must reference id's in the same input CSV")
 
     return True
 
