@@ -53,27 +53,14 @@ PIXEL_AREA = 0.000000695  # Constant for the area of a single pixel in MERIT-Hyd
 FILL_AREA_MAX = config.get("FILL_THRESHOLD") * PIXEL_AREA
 
 
-def get_wshed_rows(df: gpd.GeoDataFrame, outlet):
+def get_wshed_rows(df: gpd.GeoDataFrame, outlet_id):
     """
     Extracts rows of the gages GeoDataFrame for an outlet and any upstream points.
 
     """
-    start_index = df[df['id'] == outlet].index[0]
-
-    # Slice the DataFrame from the start_index to the end
-    subset_df = df.iloc[start_index:]
-
-    # Find the index of the first row where is_outlet is True
-    indices = list(subset_df[subset_df['is_outlet'] == True].index)
-
-    if len(indices) > 1:
-        end_index = indices[1] - 1
-        # Select all rows from start_index to end_index (inclusive)
-        result_df = subset_df.loc[0:end_index]
-    else:
-        result_df = subset_df
-
-    return result_df
+    wshed_indices = df[df['outlet_id'] == outlet_id].index
+    wshed_df = df.loc[wshed_indices]
+    return wshed_df
 
 '''
 options:
