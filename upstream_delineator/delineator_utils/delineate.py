@@ -634,7 +634,7 @@ def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
     # Check that the CSV file includes at a minimum: id, lat, lng and that all values are appropriate
     validate(gages_df)
 
-    # When an row's id matches its outlet_id, it is an outlet
+    # When a row's id matches its outlet_id, it is an outlet
     gages_df["is_outlet"] = False
     outlet_indices = gages_df[gages_df["outlet_id"] == gages_df["id"]].index
     gages_df.loc[outlet_indices, "is_outlet"] = True
