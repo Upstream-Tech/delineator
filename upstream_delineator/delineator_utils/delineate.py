@@ -223,10 +223,10 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
             raise Warning(f"Could not assign to a unit catchment to gage with id {id}")
 
     # First, let us find the set of unit catchments upstream of the outlet.
-    terminal_node_id = gages_gdf.index[0]
+    terminal_node_id = gages_gdf[gages_gdf["is_outlet"] == True].index[0]
 
     # The terminal comid is the unit catchment that contains (overlaps) the outlet point
-    terminal_comid = gages_gdf['COMID'].iloc[0]
+    terminal_comid = gages_gdf['COMID'].loc[terminal_node_id]
 
     # Let upstream_comids be the list of unit catchments (and river reaches) that are in the basin
     upstream_comids = []
