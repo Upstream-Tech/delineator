@@ -58,9 +58,7 @@ def get_wshed_rows(df: gpd.GeoDataFrame, outlet_id):
     Extracts rows of the gages GeoDataFrame for an outlet and any upstream points.
 
     """
-    wshed_indices = df[df['outlet_id'] == outlet_id].index
-    wshed_df = df.loc[wshed_indices]
-    return wshed_df
+    return df.loc[df['outlet_id'] == outlet_id]
 
 '''
 options:
@@ -223,16 +221,15 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
             raise Warning(f"Could not assign to a unit catchment to gage with id {id}")
 
     # First, let us find the set of unit catchments upstream of the outlet.
-    terminal_node_id = gages_gdf[gages_gdf["is_outlet"] == True].index[0]
-
+    terminal_node_df = gages_gdf.loc[gages_gdf["is_outlet"]]
+    assert len(terminal_node_df) == 1, "Should only have one outlet per watershed"
+    terminal_node_id = terminal_node_df.index[0]
     # The terminal comid is the unit catchment that contains (overlaps) the outlet point
-    terminal_comid = gages_gdf['COMID'].loc[terminal_node_id]
+    terminal_comid = terminal_node_df['COMID'].iat[0]
 
     # Let upstream_comids be the list of unit catchments (and river reaches) that are in the basin
     upstream_comids = []
-
     # Add the first node, and the rest will be added recursively
-
     addnode(upstream_comids, terminal_comid)
 
     # Next, check that all the other points provided by the user are
