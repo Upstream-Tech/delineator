@@ -53,27 +53,12 @@ PIXEL_AREA = 0.000000695  # Constant for the area of a single pixel in MERIT-Hyd
 FILL_AREA_MAX = config.get("FILL_THRESHOLD") * PIXEL_AREA
 
 
-def get_wshed_rows(df: gpd.GeoDataFrame, outlet):
+def get_wshed_rows(df: gpd.GeoDataFrame, outlet_id):
     """
     Extracts rows of the gages GeoDataFrame for an outlet and any upstream points.
 
     """
-    start_index = df[df['id'] == outlet].index[0]
-
-    # Slice the DataFrame from the start_index to the end
-    subset_df = df.iloc[start_index:]
-
-    # Find the index of the first row where is_outlet is True
-    indices = list(subset_df[subset_df['is_outlet'] == True].index)
-
-    if len(indices) > 1:
-        end_index = indices[1] - 1
-        # Select all rows from start_index to end_index (inclusive)
-        result_df = subset_df.loc[0:end_index]
-    else:
-        result_df = subset_df
-
-    return result_df
+    return df.loc[df['outlet_id'] == outlet_id]
 
 '''
 options:
@@ -236,16 +221,15 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
             raise Warning(f"Could not assign to a unit catchment to gage with id {id}")
 
     # First, let us find the set of unit catchments upstream of the outlet.
-    terminal_node_id = gages_gdf.index[0]
-
+    terminal_node_df = gages_gdf.loc[gages_gdf["is_outlet"]]
+    assert len(terminal_node_df) == 1, "Should only have one outlet per watershed"
+    terminal_node_id = terminal_node_df.index[0]
     # The terminal comid is the unit catchment that contains (overlaps) the outlet point
-    terminal_comid = gages_gdf['COMID'].iloc[0]
+    terminal_comid = terminal_node_df['COMID'].iat[0]
 
     # Let upstream_comids be the list of unit catchments (and river reaches) that are in the basin
     upstream_comids = []
-
     # Add the first node, and the rest will be added recursively
-
     addnode(upstream_comids, terminal_comid)
 
     # Next, check that all the other points provided by the user are
@@ -646,6 +630,10 @@ def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
                            dtype={'id': 'str', 'lat': 'float', 'lng': 'float'})
     # Check that the CSV file includes at a minimum: id, lat, lng and that all values are appropriate
     validate(gages_df)
+
+    # When a row's id matches its outlet_id, it is an outlet
+    gages_df["is_outlet"] = gages_df["outlet_id"] == gages_df["id"]
+
     # Convert gages_df to a GeoPandas GeoDataFrame (adds geography, lets us do geo. operations)
     coordinates = [Point(xy) for xy in zip(gages_df['lng'], gages_df['lat'])]
     gages_gdf = gpd.GeoDataFrame(gages_df, crs=PROJ_WGS84, geometry=coordinates)
