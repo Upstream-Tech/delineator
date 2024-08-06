@@ -1,49 +1,47 @@
-r"""
-Delineation of watershed subbasins, using data from
-MERIT-Basins and MERIT-Hydro.
-Created by Matthew Heberger, May 2024.
-
-See README for more detailed instructions.
-
-Quick Start:
-
-First, set parameters in the file config.py.
-
-Run this script from the command line with two required arguments:
-$ python subbasins.py outlets.csv testrun
-
-or with a full file path as follows on Windows or Linux:
-$ python subbasins.py C:\Users\matt\Desktop\outlets.csv test
-$ python subbasins.py /home/files/outlets.csv test
-
-or in Python as follows:
->> from subbasins import delineate
->> delineate('outlets.csv', 'testrun')
-
-"""
-
-# Standard Python libraries. See requirements.txt for recommended versions.
-from shapely.geometry import Point
-import topojson
 import warnings
+from os.path import isfile
 
-# My stuff
-from upstream_delineator.delineator_utils.consolidate import consolidate_network, show_area_stats
-from upstream_delineator.delineator_utils.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
-    find_repeated_elements, fix_polygon, calc_length, validate, save_network, \
-    write_geodata, PROJ_WGS84  # Contains a bunch of functions
-from upstream_delineator.delineator_utils.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
-    prune_node, upstream_nodes  # Functions for working with river network information as a Python NetworkX graph
-from upstream_delineator.delineator_utils.merit_detailed import split_catchment
-from upstream_delineator.delineator_utils.plot_network import draw_graph
-from upstream_delineator.delineator_utils.fast_dissolve import dissolve_geopandas, buffer, close_holes
-from shapely.ops import unary_union
+import geopandas as gpd
+import networkx as nx
+import pandas as pd
+import topojson
+from shapely.geometry import Point
+
 from upstream_delineator import config
 
-from os.path import isfile
-import geopandas as gpd
-import pandas as pd
-import networkx as nx
+from upstream_delineator.delineator_utils.consolidate import (
+    consolidate_network,
+    show_area_stats,
+)
+from upstream_delineator.delineator_utils.fast_dissolve import (
+    buffer,
+    close_holes,
+    dissolve_geopandas,
+)
+# Functions for working with river network information as a Python NetworkX graph
+from upstream_delineator.delineator_utils.graph_tools import (
+    calculate_shreve_stream_order,
+    calculate_strahler_stream_order,
+    make_river_network,
+    prune_node,  
+    upstream_nodes,
+)
+from upstream_delineator.delineator_utils.merit_detailed import split_catchment
+from upstream_delineator.delineator_utils.plot_network import draw_graph
+from upstream_delineator.delineator_utils.util import (
+    PROJ_WGS84,
+    calc_area,
+    calc_length,
+    find_repeated_elements,
+    fix_polygon,
+    get_megabasins,
+    load_gdf,
+    make_folders,
+    plot_basins,
+    save_network,
+    validate,
+    write_geodata,
+)
 
 # Shapely throws a bunch of FutureWarnings. Safe to ignore for now, as long as we
 # are using a virtual environment, and use the library versions in requirements.txt.

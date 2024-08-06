@@ -1,22 +1,22 @@
-# Functions used by the watershed subbasins delineator script. Matt Heberger, May 2022
-from typing import Union
 import json
 import os
+import pickle
+import re
+import warnings
 from functools import partial
+from typing import Union
+
+import geopandas as gpd
+import matplotlib.pyplot as plt
 import networkx
+import pandas as pd
 import pyproj
 import shapely
-from shapely.ops import unary_union
 from geopandas import GeoDataFrame
 from geopandas.io.file import _read_file_pyogrio
-from shapely.geometry import MultiPolygon, Polygon, LineString
-import geopandas as gpd
-import pandas as pd
-import re
-import pickle
-import warnings
-import matplotlib.pyplot as plt
 from numpy import random
+from shapely.geometry import LineString, MultiPolygon, Polygon
+from shapely.ops import unary_union
 
 from upstream_delineator import config
 
