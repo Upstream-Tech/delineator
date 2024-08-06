@@ -65,7 +65,7 @@ if __name__ == "__main__":
     for key, val in vars(args).items():
         if key in _GLOBAL_CONFIG:
             config_vals[key] = val 
-        elif key.removeprefix("NO_") in _GLOBAL_CONFIG:
-            config_vals[key.removeprefix("NO_")] = not val 
+        elif (stripped_key := key.removeprefix("NO_")) in _GLOBAL_CONFIG:
+            config_vals[stripped_key] = not val 
     
     delineate(args.input_csv, args.output_prefix, config_vals=config_vals)
