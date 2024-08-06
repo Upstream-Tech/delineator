@@ -26,44 +26,46 @@ or in Python as follows:
 import argparse
 import sys
 sys.path.insert(0, ".")
+import inspect
 
 # My stuff
 from upstream_delineator.delineator_utils.delineate import delineate
-
-
-def _run_from_terminal():
-    """
-    Routine which is run when you call subbasins.py from the command line.
-    should be run like:
-    python subbasins.py outlets.csv run_name
-    """
-    # Create the parser for command line inputs.
-    description = "Delineate subbasins using data in and input CSV file. Writes " \
-        "a set of output files beginning with the output prefix string."
-
-    parser = argparse.ArgumentParser(description=description)
-
-    # Add the arguments
-    parser.add_argument('input_csv', help="Input CSV filename, for example 'gages.csv'")
-    parser.add_argument('output_prefix', help="Output prefix, a string. The output files will start with this string")
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-    # Call the main function, passing the command line arguments
-    G, subbasins_gdf, myrivers_gdf = delineate(args.input_csv, args.output_prefix)
-
-
-def main():
-    # Run directly, for convenience or during development and debugging
-    input_csv = 'outlets.csv'
-    out_prefix = 'iceland'
-    delineate(input_csv, out_prefix)
+from upstream_delineator.config import _GLOBAL_CONFIG
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Run with command-line arguments
-        _run_from_terminal()
-    else:
-        main()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        "input_csv",
+        help="CSV of outlets to delineate.",
+    )
+    argparser.add_argument(
+        "output_prefix",
+        help="Prefix for output files from this run.",
+    )
+    for key, default_val in _GLOBAL_CONFIG.items():
+        if default_val is True:
+            argparser.add_argument(
+                f"--NO_{key}",
+                action="store_true",
+            ) 
+        elif default_val is False:
+            argparser.add_argument(
+                f"--{key}",
+                action="store_true",
+            ) 
+        else:
+            argparser.add_argument(
+                f"--{key}",
+                type=type(default_val),
+                default=default_val,
+            )
+    args = argparser.parse_args()
+    config_vals = {}
+    for key, val in vars(args).items():
+        if key in _GLOBAL_CONFIG:
+            config_vals[key] = val 
+        elif (stripped_key := key.removeprefix("NO_")) in _GLOBAL_CONFIG:
+            config_vals[stripped_key] = not val 
+    
+    delineate(args.input_csv, args.output_prefix, config_vals=config_vals)
