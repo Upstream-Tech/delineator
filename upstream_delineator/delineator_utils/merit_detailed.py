@@ -1,7 +1,7 @@
 """
 Performs a detailed, raster-based watershed delineation with `pysheds`,
 but only inside of a *single* unit catchment.
-This is Matthew Heberger's implementation of the *hybrid* method ,which was
+This is Matthew Heberger's implementation of the *hybrid* method, which was
 first described in a a paper by Djokic and Ye at the 1999 ESRI User Conference.
 Raster-based delineation is slow and requires a lot of memory. So we only do the bare minimum,
 and use vector data for the rest of the upstream watershed.
