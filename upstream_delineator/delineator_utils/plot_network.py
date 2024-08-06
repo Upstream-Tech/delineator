@@ -1,6 +1,7 @@
-import networkx as nx
 import graphviz
+import networkx as nx
 from PIL import Image
+
 from upstream_delineator import config
 
 

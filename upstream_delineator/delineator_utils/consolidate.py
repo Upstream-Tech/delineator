@@ -1,14 +1,20 @@
 # Set of routines for simplifying and consolidating river networks
 
 import pickle
-import networkx as nx
-from upstream_delineator.delineator_utils.plot_network import draw_graph
-from upstream_delineator.delineator_utils.graph_tools import calculate_shreve_stream_order, calculate_strahler_stream_order, prune_node
-import numpy as np
-from upstream_delineator import config
-from scipy.stats import skew
-import matplotlib.pyplot as plt
 from typing import Tuple
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+from scipy.stats import skew
+
+from upstream_delineator import config
+from upstream_delineator.delineator_utils.graph_tools import (
+    calculate_shreve_stream_order,
+    calculate_strahler_stream_order,
+    prune_node,
+)
+from upstream_delineator.delineator_utils.plot_network import draw_graph
 
 # Set to True to draw a bunch of network graphs. Mostly for debugging. Careful, they can get big for large networks
 DRAW_NET_DIAGRAM = False

@@ -18,7 +18,7 @@ with my watershed boundaries.
 """
 
 import geopandas as gpd
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon
 
 
 def buffer(poly: Polygon) -> Polygon:

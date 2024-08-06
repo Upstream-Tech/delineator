@@ -8,13 +8,21 @@ and use vector data for the rest of the upstream watershed.
 """
 import os
 from typing import Optional
-from numpy import floor, ceil
-from shapely.geometry import Polygon, MultiPolygon
-from shapely import wkb, ops
+
 import numpy as np
+from numpy import ceil, floor
+from shapely import ops, wkb
+from shapely.geometry import MultiPolygon, Polygon
 
 from upstream_delineator import config
-from upstream_delineator.delineator_utils.raster_plots import plot_mask, plot_accum, plot_flowdir, plot_streams, plot_clipped, plot_polys
+from upstream_delineator.delineator_utils.raster_plots import (
+    plot_accum,
+    plot_clipped,
+    plot_flowdir,
+    plot_mask,
+    plot_polys,
+    plot_streams,
+)
 from upstream_delineator.delineator_utils.util import get_largest
 
 FLOW_DIR_PATH = os.getenv("FLOW_DIR_PATH")

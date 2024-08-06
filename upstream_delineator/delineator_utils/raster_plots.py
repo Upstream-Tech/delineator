@@ -2,12 +2,11 @@
 Plots of the raster analysis, for debugging mostly
 """
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import colors, rc
 from matplotlib.colors import LogNorm
-import numpy as np
-import geopandas as gpd
-
 
 font = {'weight': 'normal',
         'size': 18}

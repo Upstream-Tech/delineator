@@ -23,27 +23,51 @@ or in Python as follows:
 """
 
 # Standard Python libraries. See requirements.txt for recommended versions.
-from shapely.geometry import Point
-import topojson
 import warnings
+from os.path import isfile
 
-# My stuff
-from upstream_delineator.delineator_utils.consolidate import consolidate_network, show_area_stats
-from upstream_delineator.delineator_utils.util import make_folders, get_megabasins, load_gdf, plot_basins, calc_area, \
-    find_repeated_elements, fix_polygon, calc_length, validate, save_network, \
-    write_geodata, PROJ_WGS84  # Contains a bunch of functions
-from upstream_delineator.delineator_utils.graph_tools import make_river_network, calculate_strahler_stream_order, calculate_shreve_stream_order, \
-    prune_node, upstream_nodes  # Functions for working with river network information as a Python NetworkX graph
-from upstream_delineator.delineator_utils.merit_detailed import split_catchment
-from upstream_delineator.delineator_utils.plot_network import draw_graph
-from upstream_delineator.delineator_utils.fast_dissolve import dissolve_geopandas, buffer, close_holes
+import geopandas as gpd
+import networkx as nx
+import pandas as pd
+import topojson
+from shapely.geometry import Point
 from shapely.ops import unary_union
+
 from upstream_delineator import config
 
-from os.path import isfile
-import geopandas as gpd
-import pandas as pd
-import networkx as nx
+# My stuff
+from upstream_delineator.delineator_utils.consolidate import (
+    consolidate_network,
+    show_area_stats,
+)
+from upstream_delineator.delineator_utils.fast_dissolve import (
+    buffer,
+    close_holes,
+    dissolve_geopandas,
+)
+from upstream_delineator.delineator_utils.graph_tools import (
+    calculate_shreve_stream_order,
+    calculate_strahler_stream_order,
+    make_river_network,
+    prune_node,  # Functions for working with river network information as a Python NetworkX graph
+    upstream_nodes,
+)
+from upstream_delineator.delineator_utils.merit_detailed import split_catchment
+from upstream_delineator.delineator_utils.plot_network import draw_graph
+from upstream_delineator.delineator_utils.util import (
+    PROJ_WGS84,
+    calc_area,
+    calc_length,
+    find_repeated_elements,
+    fix_polygon,
+    get_megabasins,
+    load_gdf,
+    make_folders,
+    plot_basins,
+    save_network,
+    validate,
+    write_geodata,  # Contains a bunch of functions
+)
 
 # Shapely throws a bunch of FutureWarnings. Safe to ignore for now, as long as we
 # are using a virtual environment, and use the library versions in requirements.txt.

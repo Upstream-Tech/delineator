@@ -25,13 +25,14 @@ or in Python as follows:
 # Standard Python libraries. See requirements.txt for recommended versions.
 import argparse
 import sys
+
 sys.path.insert(0, ".")
 import inspect
 
-# My stuff
-from upstream_delineator.delineator_utils.delineate import delineate
 from upstream_delineator.config import _GLOBAL_CONFIG
 
+# My stuff
+from upstream_delineator.delineator_utils.delineate import delineate
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
