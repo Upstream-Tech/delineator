@@ -1,4 +1,3 @@
-# Functions used by the watershed subbasins delineator script. Matt Heberger, May 2022
 import json
 import os
 import pickle

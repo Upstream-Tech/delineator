@@ -1,10 +1,3 @@
-"""
-Configuration / Settings for subbasins.py
-
-See README for more information about the options.
-
-"""
-
 _GLOBAL_CONFIG = {
   # Set to True if you want the script to write status messages to the console
   "VERBOSE": True,

@@ -4,16 +4,14 @@ Faster Dissolve All with GeoPandas
 For a layer with many polygons, it can be slow to dissolve to get the "outer boundary" or "outer perimeter"
 using GeoPandas
 
-I found a method that works a little bit more quickly.
+Matthew Heberger found a method that works a little bit more quickly.
 
 (1) create a new rectangle out of the bounding box around all the features. 
 (2) clip the rectangle using the input layer (containing polygons).
 
 
 input: a geopandas dataframe with multiple polygons.
-output: a geopandas dataseries with a single polygon
-with no internal rings or "donut holes," which is what I was looking for
-with my watershed boundaries. 
+output: a geopandas dataseries with a single polygon with no internal rings or "donut holes" 
 
 """
 

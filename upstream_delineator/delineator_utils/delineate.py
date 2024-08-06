@@ -1,28 +1,3 @@
-r"""
-Delineation of watershed subbasins, using data from
-MERIT-Basins and MERIT-Hydro.
-Created by Matthew Heberger, May 2024.
-
-See README for more detailed instructions.
-
-Quick Start:
-
-First, set parameters in the file config.py.
-
-Run this script from the command line with two required arguments:
-$ python subbasins.py outlets.csv testrun
-
-or with a full file path as follows on Windows or Linux:
-$ python subbasins.py C:\Users\matt\Desktop\outlets.csv test
-$ python subbasins.py /home/files/outlets.csv test
-
-or in Python as follows:
->> from subbasins import delineate
->> delineate('outlets.csv', 'testrun')
-
-"""
-
-# Standard Python libraries. See requirements.txt for recommended versions.
 import warnings
 from os.path import isfile
 
@@ -31,11 +6,9 @@ import networkx as nx
 import pandas as pd
 import topojson
 from shapely.geometry import Point
-from shapely.ops import unary_union
 
 from upstream_delineator import config
 
-# My stuff
 from upstream_delineator.delineator_utils.consolidate import (
     consolidate_network,
     show_area_stats,
@@ -45,11 +18,12 @@ from upstream_delineator.delineator_utils.fast_dissolve import (
     close_holes,
     dissolve_geopandas,
 )
+# Functions for working with river network information as a Python NetworkX graph
 from upstream_delineator.delineator_utils.graph_tools import (
     calculate_shreve_stream_order,
     calculate_strahler_stream_order,
     make_river_network,
-    prune_node,  # Functions for working with river network information as a Python NetworkX graph
+    prune_node,  
     upstream_nodes,
 )
 from upstream_delineator.delineator_utils.merit_detailed import split_catchment
@@ -66,7 +40,7 @@ from upstream_delineator.delineator_utils.util import (
     plot_basins,
     save_network,
     validate,
-    write_geodata,  # Contains a bunch of functions
+    write_geodata,
 )
 
 # Shapely throws a bunch of FutureWarnings. Safe to ignore for now, as long as we
