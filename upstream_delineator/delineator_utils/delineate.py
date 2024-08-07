@@ -66,7 +66,7 @@ options:
     - this could be a pydantic class we define or a superclass that clients import and make instances of to enforce fields 
 '''
 
-def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_dtypes: Optional[dict] = None):
+def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_dtypes: dict = None):
     """
     Finds the watershed for a set of outlets.
     Make sure to set the variables in `config.py` before running.
@@ -613,7 +613,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
     return subbasins_gdf
 
 
-def make_gages_gdf(input_csv: str, csv_dtypes=None) -> gpd.GeoDataFrame:
+def make_gages_gdf(input_csv: str, csv_dtypes: dict =None) -> gpd.GeoDataFrame:
     """
     Reads user data from a CSV file containing information about the desired watershed outlet points.
     and returns a GeoPandas GeoDataFrame where the geometry field contains XY points in unprojected
