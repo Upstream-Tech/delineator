@@ -613,7 +613,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
     return subbasins_gdf
 
 
-def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
+def make_gages_gdf(input_csv: str, csv_dtypes=None) -> gpd.GeoDataFrame:
     """
     Reads user data from a CSV file containing information about the desired watershed outlet points.
     and returns a GeoPandas GeoDataFrame where the geometry field contains XY points in unprojected
@@ -624,8 +624,12 @@ def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
         raise Exception(f"Could not find your outlets file at: {input_csv}")
 
     if config.get("VERBOSE"): print(f"Reading your outlets data in: {input_csv}")
+
+    dtype = {'id': 'str', 'lat': 'float', 'lng': 'float'}
+    if csv_dtypes:
+        dtype = {**csv_dtypes, **dtype}
     gages_df = pd.read_csv(input_csv, header=0, skipinitialspace=True,
-                           dtype={'id': 'str', 'lat': 'float', 'lng': 'float'})
+                           dtype=dtype)
     # Check that the CSV file includes at a minimum: id, lat, lng and that all values are appropriate
     validate(gages_df)
 
