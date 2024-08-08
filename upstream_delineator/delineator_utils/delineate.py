@@ -373,7 +373,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         }
         # Use the first value for columns we are not using to spatially aggregate
         custom_columns = [col for col in subbasins_gdf.columns if col not in [*agg, 'geometry', 'target']]
-        for col in columns_not_in_spatial_agg:
+        for col in custom_columns:
             agg[col] = 'first'
 
         if config.get("VERBOSE"): print("Dissolving geometries. Can be slow. Please wait...")
