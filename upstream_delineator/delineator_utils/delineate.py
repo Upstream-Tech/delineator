@@ -66,7 +66,7 @@ options:
     - this could be a pydantic class we define or a superclass that clients import and make instances of to enforce fields 
 '''
 
-def delineate(input_csv: str, output_prefix: str, config_vals: dict = None):
+def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_dtypes: dict = None):
     """
     Finds the watershed for a set of outlets.
     Make sure to set the variables in `config.py` before running.
@@ -91,7 +91,7 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None):
 
     # Read the outlet points CSV file and put the data into a Pandas DataFrame
     # (I call the outlet points gages, because I usually in delineated watersheds at streamflow gages)
-    gages_gdf = make_gages_gdf(input_csv)
+    gages_gdf = make_gages_gdf(input_csv, csv_dtypes)
 
     # Create a filtered version with only the *outlets*
     outlets_gdf = gages_gdf[gages_gdf['is_outlet'] == True]
@@ -613,7 +613,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
     return subbasins_gdf
 
 
-def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
+def make_gages_gdf(input_csv: str, csv_dtypes: dict =None) -> gpd.GeoDataFrame:
     """
     Reads user data from a CSV file containing information about the desired watershed outlet points.
     and returns a GeoPandas GeoDataFrame where the geometry field contains XY points in unprojected
@@ -624,8 +624,12 @@ def make_gages_gdf(input_csv: str) -> gpd.GeoDataFrame:
         raise Exception(f"Could not find your outlets file at: {input_csv}")
 
     if config.get("VERBOSE"): print(f"Reading your outlets data in: {input_csv}")
+
+    dtype = {'id': 'str', 'lat': 'float', 'lng': 'float'}
+    if csv_dtypes:
+        dtype = {**csv_dtypes, **dtype}
     gages_df = pd.read_csv(input_csv, header=0, skipinitialspace=True,
-                           dtype={'id': 'str', 'lat': 'float', 'lng': 'float'})
+                           dtype=dtype)
     # Check that the CSV file includes at a minimum: id, lat, lng and that all values are appropriate
     validate(gages_df)
 
