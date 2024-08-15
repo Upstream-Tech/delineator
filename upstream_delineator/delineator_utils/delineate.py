@@ -148,7 +148,7 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_
         write_outputs(G, myrivers_gdf, subbasins_gdf, gages_list, output_prefix)
 
     if config.get("NETWORK_DIAGRAMS"):
-        draw_graph(G, f'plots/{output_prefix}_network_final')
+        draw_graph(G, f'{config.get("PLOTS_DIR")}/{output_prefix}_network_final')
 
     print("Ran successfully!")
     return G, subbasins_gdf, myrivers_gdf
@@ -254,7 +254,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
 
     # For debugging mostly
     # G = make_river_network(subbasins_gdf, terminal_comid)
-    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'plots/{OUTPUT_PREFIX}_network_before')
+    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_network_before')
 
     # Create two copies of river network data!
     # `allrivers_gdf` will contain all the available polylines in the watershed, a nice
@@ -313,7 +313,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         G.nodes[gage]['custom'] = True
 
     # Draw the network before consolidating? Mostly useful for debugging.
-    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'plots/{OUTPUT_PREFIX}_premerge')
+    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_premerge')
 
     # CHECK FOR Null Geometries.
     # If the user has placed one of their points very close to an existing basin outlet,
@@ -329,7 +329,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     if len(null_nodes) > 0:
         if config.get("VERBOSE"): print(f"Pruned {len(null_nodes)} empty unit catchments from the river network.")
         print(null_nodes)
-        # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'plots/{OUTPUT_PREFIX}_network_pruned')
+        # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_network_pruned')
 
     null_rivers = myrivers_gdf.index[myrivers_gdf['geometry'].is_empty].tolist()
     myrivers_gdf.drop(null_rivers, inplace=True)
@@ -359,7 +359,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     # I call this "consolidating the river network."
     if config.get("CONSOLIDATE"):
         G, MERGES, rivers2merge, rivers2delete = consolidate_network(G, threshold_area=config.get("MAX_AREA"))
-        # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'plots/{OUTPUT_PREFIX}_network_final')
+        # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_network_final')
         subbasins_gdf['target'] = subbasins_gdf.index
 
         # Dissolve unit catchments based on information in MERGES.
