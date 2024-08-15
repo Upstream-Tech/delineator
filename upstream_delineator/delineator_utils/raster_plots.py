@@ -8,6 +8,8 @@ import numpy as np
 from matplotlib import colors, rc
 from matplotlib.colors import LogNorm
 
+from upstream_delineator import config
+
 font = {'weight': 'normal',
         'size': 18}
 
@@ -23,8 +25,8 @@ def plot_mask(mask, catchment_poly, lat, lng, wid):
     plt.scatter(x=lng, y=lat, c='red', edgecolors='black')
     plt.colorbar(label='Terminal Unit Catchment', fraction=0.06, pad=0.06)
 
-    plt.title("Mask for the unit catchment for watershed id = {}".format(wid))
-    plt.savefig('plots/{}_raster_mask.jpg'.format(wid))
+    plt.title(f"Mask for the unit catchment for watershed id = {wid}")
+    plt.savefig(f'{config.get("PLOTS_DIR")}/{wid}_raster_mask.jpg')
     plt.close(fig)
 
 
@@ -38,8 +40,8 @@ def plot_flowdir(fdir, lat, lng, wid, dirmap, catchment_poly):
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.scatter(x=lng, y=lat, c='red', edgecolors='black')
-    plt.title('Flow direction grid for watershed id ={}'.format(wid))
-    plt.savefig("plots/{}_raster_flowdir.jpg".format(wid))
+    plt.title(f'Flow direction grid for watershed id = {wid}')
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_raster_flowdir.jpg")
     plt.close(fig)
 
 
@@ -54,10 +56,10 @@ def plot_accum(acc, lat, lng, lat_snap, lng_snap, wid, catchment_poly):
     plt.plot(*catchment_poly.exterior.xy, color='red')
     plt.scatter(x=lng, y=lat, c='red', edgecolors='black')
     plt.scatter(x=lng_snap, y=lat_snap, c='cyan', edgecolors='black')
-    plt.title('Flow Accumulation Grid for watershed id = {}'.format(wid))
+    plt.title(f'Flow Accumulation Grid for watershed id = {wid}')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
-    plt.savefig("plots/{}_raster_accum.jpg".format(wid))
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_raster_accum.jpg")
     plt.close(fig)
 
 
@@ -72,7 +74,7 @@ def plot_streams(streams, catchment_poly, lat, lng, lat_snap, lng_snap, wid, num
     plt.colorbar(label='Streams', fraction=0.06, pad=0.06)
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
-    plt.savefig("plots/{}_streams.jpg".format(wid))
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_streams.jpg")
     plt.close(fig)
 
 
@@ -97,8 +99,8 @@ def plot_catchment(fdir, catchment_poly, result_polygon, lat, lng, lat_snap, lng
     plt.ylabel('Latitude')
     plt.scatter(x=lng, y=lat, c='red', edgecolors='black')
     plt.scatter(x=lng_snap, y=lat_snap, c='cyan', edgecolors='black', zorder=10)
-    plt.title('Delineated Raster Catchment for watershed id = {}'.format(wid))
-    plt.savefig("plots/{}_raster_catchment.jpg".format(wid))
+    plt.title(f'Delineated Raster Catchment for watershed id = {wid}')
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_raster_catchment.jpg")
     plt.close(fig)
 
 
@@ -119,8 +121,8 @@ def plot_clipped(fdir, clipped_catch, catchment_poly, lat, lng, lat_snap, lng_sn
 
     plt.scatter(x=lng, y=lat, c='red', edgecolors='black')
     plt.scatter(x=lng_snap, y=lat_snap, c='cyan', edgecolors='black', zorder=10)
-    plt.title('Clipped Catchment for watershed id = {}'.format(wid))
-    plt.savefig("plots/{}_raster_catchment_and_poly.jpg".format(wid))
+    plt.title('Clipped Catchment for watershed id = {}')
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_raster_catchment_and_poly.jpg")
     plt.close(fig)
 
 
@@ -151,5 +153,5 @@ def plot_polys(polygons: list, wid: str):
         color = np.random.rand(3, )
         gdf.loc[[x]].plot(edgecolor='gray', color=color, ax=ax)
 
-    plt.savefig(f"plots/{wid}_vector_catch_sub.jpg")
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{wid}_vector_catch_sub.jpg")
     plt.close(fig)

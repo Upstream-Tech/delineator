@@ -353,22 +353,22 @@ def consolidate_network(G: nx.DiGraph, threshold_area: float or int) -> Tuple[nx
     rivers2merge = {}
     rivers2delete = []
 
-    if DRAW_NET_DIAGRAM: draw_graph(G, filename='plots/test_net', title="Original Network")
+    if DRAW_NET_DIAGRAM: draw_graph(G, filename=f'{config.get("PLOTS_DIR")}/test_net', title="Original Network")
     if config.get("VERBOSE"):
         print(f"Consolidating river network. Max. subbasin area: {threshold_area}")
         print('Iteration #1')
 
     # Step 1, merge leaves with their downstream node
     G, MERGES, rivers2merge, rivers2delete = trim_clusters(G, threshold_area, MERGES, rivers2merge, rivers2delete)
-    if DRAW_NET_DIAGRAM: draw_graph(G, filename='plots/test_pruned', title="Pruned Network after Step 1")
+    if DRAW_NET_DIAGRAM: draw_graph(G, filename=f'{config.get("PLOTS_DIR")}/test_pruned', title="Pruned Network after Step 1")
 
     # Step 2, merge stems
     G, MERGES, rivers2merge = collapse_stems(G, threshold_area, MERGES, rivers2merge)
-    if DRAW_NET_DIAGRAM: draw_graph(G, filename='plots/test_step2', title="Stems merged, after Step 2")
+    if DRAW_NET_DIAGRAM: draw_graph(G, filename=f'{config.get("PLOTS_DIR")}/test_step2', title="Stems merged, after Step 2")
 
     # Step #3, prune small solo leaves
     G, MERGES, rivers2merge, rivers2delete = prune_leaves(G, threshold_area, MERGES, rivers2merge, rivers2delete)
-    if DRAW_NET_DIAGRAM: draw_graph(G, filename='plots/test_step4', title="Small solo leaves pruned, after Step 4")
+    if DRAW_NET_DIAGRAM: draw_graph(G, filename=f'{config.get("PLOTS_DIR")}/test_step4', title="Small solo leaves pruned, after Step 4")
 
     # Iterate through the consolidation steps until the network stops changing
     i = 1  # Counter to keep track of how many iterations we do
@@ -388,7 +388,7 @@ def consolidate_network(G: nx.DiGraph, threshold_area: float or int) -> Tuple[nx
     # Final step, takes care of any remaining small stem nodes
     G, MERGES, rivers2merge = last_merge(G, threshold_area, MERGES, rivers2merge)
 
-    if DRAW_NET_DIAGRAM:  draw_graph(G, filename='plots/test_step5', title="After iteration, Step 5")
+    if DRAW_NET_DIAGRAM:  draw_graph(G, filename=f'{config.get("PLOTS_DIR")}/test_step5', title="After iteration, Step 5")
     if config.get("VERBOSE"): show_area_stats(G)
 
     return G, MERGES, rivers2merge, rivers2delete
