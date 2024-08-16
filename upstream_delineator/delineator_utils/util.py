@@ -372,7 +372,7 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple[float]) -> gpd.G
 
     if config.get("VERBOSE"): print(f"Reading geodata in {gis_path}")
     # use _read_file_pygrio instead of gpd.read_file b/c it's performing an unneeded check that causes a 403 error 
-    gdf = _read_file_pyogrio(gis_path, bbox=bounds)
+    gdf = _read_file_pyogrio(gis_path, bbox=bounds, VERIFY_BUFFERS="NO")
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
 
