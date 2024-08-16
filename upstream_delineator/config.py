@@ -106,6 +106,10 @@ _GLOBAL_CONFIG = {
   # 'xml':  GraphML is an XML-based file format for graphs.
   "NETWORK_FILE_EXT": 'xml',
 
+  # Whether to read cached local data on subsequent runs 
+  # Useful to set to False for performance debugging
+  "CACHE": True,
+
 }
 
 def get(val: str):
