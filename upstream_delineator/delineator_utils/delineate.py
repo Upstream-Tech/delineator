@@ -132,7 +132,22 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_
                                                                            catchments_gdf, rivers_gdf)
             # Merge the results with the master
             if G is not None:
+                pre_composed_length = len(G)
+                
                 G = nx.compose(G, wshed_G)
+                
+                # Check for overlap between graphs
+                if len(G) != pre_composed_length + len(wshed_G):
+                    suspect_successors = set()
+                    for node in G.nodes:
+                        successors = list(G.successors(node))
+                        if len(successors) > 1:
+                            for succ in successors:
+                                if G.nodes[succ].get('custom'):
+                                    succ_names = wshed_subbasins_gdf.loc[wshed_subbasins_gdf['comid'] == succ, 'name'].values.tolist()
+                                    suspect_successors.update(succ_names)
+                    raise ValueError(f'Found overlapping subbasins between what was designated as distinct outlets. One of the following nodes may incorrectly be designated as an outlet when it is not the downstream most point: {", ".join(suspect_successors)}.')
+
                 subbasins_gdf = pd.concat([subbasins_gdf, wshed_subbasins_gdf])
                 myrivers_gdf = pd.concat([myrivers_gdf, wshed_rivers_gdf])
             else:
