@@ -106,6 +106,11 @@ _GLOBAL_CONFIG = {
   # 'xml':  GraphML is an XML-based file format for graphs.
   "NETWORK_FILE_EXT": 'xml',
 
+  # to speed up reads you can set this to False 
+  # assuming you're reading from a data source you trust 
+  # see: https://github.com/flatgeobuf/flatgeobuf?tab=readme-ov-file#why-am-i-not-getting-expected-performance-in-gdal
+  "VERIFY_BUFFERS": True,
+
 }
 
 def get(val: str):
