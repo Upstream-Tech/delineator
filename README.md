@@ -213,16 +213,6 @@ using revised coordinates. The script will automatically overwrite existing file
 without any warning, so first make sure to back up anything you want to save.
 
 
-# Pickle Files
-
-**Optional.** One of the slow steps in the script is reading shapefiles and creating a GeoDataFrame. 
-Once you have done this once, you can save time in the future by storing the GeoDataFrame as a .pkl file.
-Override the file path for the constant `PICKLE_DIR`, and the script will automatically save files here. 
-The script will not search for pickle files if you leave this as a blank string, `''` 
-Note that these files are not any smaller than the original shapefile, so they don't save disk space;
-they are just faster to load. 
-
-
 # Simplification
 
 The Python routine used to simplify the subbasin polygons (`topojson`) is not perfect.

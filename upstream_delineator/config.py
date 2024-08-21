@@ -28,7 +28,7 @@ _GLOBAL_CONFIG = {
   # can save time in future runs by storing the GeoDataFrame as a .pkl file.
   # Enter a blank string, '' if you do NOT want the script to create .pkl files.
   # Please note that these files can be large! (Up to around 1 GB for large basins.)
-  "PICKLE_DIR": 'pkl',
+  "CACHE_DIR": 'cache',
 
   # Threshold for number of upstream pixels that defines a stream
   # These values worked will in my testing, but you might try changing if the
@@ -114,8 +114,7 @@ _GLOBAL_CONFIG = {
 }
 
 def get(val: str):
-  # TODO: raise nice error if val is missing
-  return _GLOBAL_CONFIG.get(val)
+  return _GLOBAL_CONFIG[val]
 
 def set(config_vals: dict) -> None:
   # TODO: add validation if there are required vals
