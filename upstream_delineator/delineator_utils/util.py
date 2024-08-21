@@ -256,18 +256,28 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     If the .pkl does not exist, create it for faster processing in the future,
     since reading flatgeobuf files is slow.
     """
-    import time
-    start_time = time.time()
-    with fsspec.open(MEGABASINS_PATH) as f:
-        megabasins_gdf = gpd.read_parquet(f, bbox=bounds)
-    end_time = time.time()
-    print(f"Seconds: {(end_time - start_time)}")
+    # Check whether the pickle file exists
+    pickle_fname = f"{config.get('PICKLE_DIR')}/megabasins.pkl"
+    if os.path.isfile(pickle_fname):
+        if config.get("VERBOSE"): print("Loading Megabasins from Pickle File")
+        gdf = pickle.load(open(pickle_fname, "rb"))
+        return gdf
+    else:
+        if config.get("VERBOSE"): print(f"Reading Megabasins from {MEGABASINS_PATH}")
+        with fsspec.open(MEGABASINS_PATH) as f:
+            megabasins_gdf = gpd.read_parquet(f, bbox=bounds)
 
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
     megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
 
     # Check that data is well-formed 
     ((11 <= megabasins_gdf.BASIN) & (megabasins_gdf.BASIN <= 91)).all()
+
+    # Try saving to a pickle file for future speedups
+    if config.get("PICKLE_DIR") != '':
+        # Recall that the latest versions of GeoPandas create spatial indices automatically
+        if config.get("VERBOSE"): print("Saving megabasins GeoDataFrame to pickle file.")
+        pickle.dump(megabasins_gdf, open(pickle_fname, "wb"))
 
     return megabasins_gdf
 
@@ -323,25 +333,17 @@ def make_folders():
             raise Exception(f"Could not create folder `{folder}`. Stopping")
 
 
-def get_pickle_filename(geotype: str, bounds: tuple, high_resolution: bool) -> str:
+def get_pickle_filename(geotype: str, basin: int) -> str:
     """Simple function to get the standard filename for the pickle files used by this project.
     The filenames look like this:
-       config.get("PICKLE_DIR")/catchments_##_##_##_##_hires.pkl
-       config.get("PICKLE_DIR")/catchments_##_##_##_##_lores.pkl
+       config.get("PICKLE_DIR")/catchments_##_##_##_##.pkl
 
-       config.get("PICKLE_DIR")/rivers_##_##_##_##_hires.pkl
-       config.get("PICKLE_DIR")/rivers_##_##_##_##_lores.pkl
+       config.get("PICKLE_DIR")/rivers_##_##_##_##.pkl
 
-    where ## is a coord in bounds
+    where ## is the megabasin number (11-91)
 
     """
-
-    if high_resolution:
-        resolution_str = 'hires'
-    else:
-        resolution_str = 'lores'
-    bounds_str = '_'.join(map(str, bounds))
-    fname = f'{config.get("PICKLE_DIR")}/{geotype}_{bounds_str}_{resolution_str}.pkl'
+    fname = f'{config.get("PICKLE_DIR")}/{geotype}_{basin}.pkl'
     return fname
 
 
@@ -361,13 +363,13 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
 
     """
 
-    # # First, check for the presence of a pickle file
-    # if config.get("PICKLE_DIR") != '':
-    #     pickle_fname = get_pickle_filename(geotype, bounds, high_resolution)
-    #     if os.path.isfile(pickle_fname):
-    #         if config.get("VERBOSE"): print(f"Loading BASIN catchment data from pickle file.")
-    #         gdf = pickle.load(open(pickle_fname, "rb"))
-    #         return gdf
+    # First, check for the presence of a pickle file
+    if config.get("PICKLE_DIR") != '':
+        pickle_fname = get_pickle_filename(geotype, basin)
+        if os.path.isfile(pickle_fname):
+            if config.get("VERBOSE"): print(f"Loading BASIN {geotype} data from pickle file.")
+            gdf = pickle.load(open(pickle_fname, "rb"))
+            return gdf
 
     if geotype == "catchments":
         gis_path = f"{CATCHMENT_PATH}/cat_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.geoparquet"
@@ -376,27 +378,19 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
 
 
     if config.get("VERBOSE"): print(f"Reading geodata in {gis_path}")
-    # use _read_file_pygrio instead of gpd.read_file b/c it's performing an unneeded check that causes a 403 error 
-    # kwargs = {
-    #     "verify_buffers": "YES" if config.get("VERIFY_BUFFERS") else "NO"
-    # }
-    import time
-    start_time = time.time()
     with fsspec.open(gis_path) as f:
         gdf = gpd.read_parquet(f)
-    end_time = time.time()
-    print(f"Seconds: {(end_time - start_time)}")
        
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
 
-    # # Before we exit, save the GeoDataFrame as a pickle file, for future speedups!
-    # save_pickle(geotype, gdf, high_resolution, bounds)
+    # Before we exit, save the GeoDataFrame as a pickle file, for future speedups!
+    save_pickle(geotype, gdf, basin)
 
     return gdf
 
 
-def save_pickle(geotype: str, gdf: gpd.GeoDataFrame, high_resolution: bool, bounds: tuple):
+def save_pickle(geotype: str, gdf: gpd.GeoDataFrame, basin: int):
     # If we loaded the catchments from a flatgeobuf, save the gdf to a pickle file for future speedup
     if config.get("PICKLE_DIR") != '':
 
@@ -408,7 +402,7 @@ def save_pickle(geotype: str, gdf: gpd.GeoDataFrame, high_resolution: bool, boun
             gdf.sindex.create_index()
 
         # Get the standard project filename for the pickle files.
-        pickle_fname = get_pickle_filename(geotype, bounds, high_resolution)
+        pickle_fname = get_pickle_filename(geotype, basin)
         if not os.path.isfile(pickle_fname):
             if config.get("VERBOSE"): print(f"Saving GeoDataFrame to pickle file: {pickle_fname}")
             try:
