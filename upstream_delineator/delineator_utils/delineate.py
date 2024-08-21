@@ -112,13 +112,13 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_
 
         bounds = megabasins_gdf.loc[megabasin].geometry.bounds
 
-        if config.get("VERBOSE"): print(f'Reading geodata for unit catchments with bounds {bounds}')
-        catchments_gdf = load_gdf("catchments", True, bounds)
+        if config.get("VERBOSE"): print(f'Reading geodata for megabasin {megabasin}')
+        catchments_gdf = load_gdf("catchments", megabasin)
 
         # The _network_ data is in the RIVERS file rather than the CATCHMENTS file
         # (this is just how the MERIT-Basins authors did it)
-        if config.get("VERBOSE"): print(f'Reading geodata for rivers with bounds {bounds}')
-        rivers_gdf = load_gdf("rivers", True, bounds)
+        if config.get("VERBOSE"): print(f'Reading geodata for megabasin {megabasin}')
+        rivers_gdf = load_gdf("rivers", megabasin)
         rivers_gdf.set_index('COMID', inplace=True)
         # We wish to report the outlet point for each subbasin.
         # We can get this information from end point of the river polylines.

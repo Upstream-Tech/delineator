@@ -5,6 +5,7 @@ import re
 import warnings
 from functools import partial
 from typing import Union
+import fsspec
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -255,7 +256,8 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     If the .pkl does not exist, create it for faster processing in the future,
     since reading flatgeobuf files is slow.
     """
-    megabasins_gdf = load_gdf("megabasins", True, bounds)
+    with fsspec.open(MEGABASINS_PATH) as f:
+        megabasins_gdf = gpd.read_parquet(f, bbox=bounds)
 
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
     megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
@@ -339,7 +341,7 @@ def get_pickle_filename(geotype: str, bounds: tuple, high_resolution: bool) -> s
     return fname
 
 
-def load_gdf(geotype: str, high_resolution: bool, bounds: tuple[float]) -> gpd.GeoDataFrame:
+def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
     """
     Returns the unit catchments vector polygon dataset as a GeoDataFrame
     Gets the data from the MERIT-Basins flatgeobuf file the first time,
@@ -355,32 +357,34 @@ def load_gdf(geotype: str, high_resolution: bool, bounds: tuple[float]) -> gpd.G
 
     """
 
-    # First, check for the presence of a pickle file
-    if config.get("PICKLE_DIR") != '':
-        pickle_fname = get_pickle_filename(geotype, bounds, high_resolution)
-        if os.path.isfile(pickle_fname):
-            if config.get("VERBOSE"): print(f"Loading BASIN catchment data from pickle file.")
-            gdf = pickle.load(open(pickle_fname, "rb"))
-            return gdf
+    # # First, check for the presence of a pickle file
+    # if config.get("PICKLE_DIR") != '':
+    #     pickle_fname = get_pickle_filename(geotype, bounds, high_resolution)
+    #     if os.path.isfile(pickle_fname):
+    #         if config.get("VERBOSE"): print(f"Loading BASIN catchment data from pickle file.")
+    #         gdf = pickle.load(open(pickle_fname, "rb"))
+    #         return gdf
 
     if geotype == "catchments":
-        gis_path = CATCHMENT_PATH
+        gis_path = f"{CATCHMENT_PATH}/cat_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.geoparquet"
     elif geotype == "rivers":
-        gis_path = RIVER_PATH
-    elif geotype == "megabasins":
-        gis_path = MEGABASINS_PATH
+        gis_path = f"{RIVER_PATH}/riv_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.geoparquet"
+
 
     if config.get("VERBOSE"): print(f"Reading geodata in {gis_path}")
     # use _read_file_pygrio instead of gpd.read_file b/c it's performing an unneeded check that causes a 403 error 
-    kwargs = {
-        "verify_buffers": "YES" if config.get("VERIFY_BUFFERS") else "NO"
-    }
-    gdf = _read_file_pyogrio(gis_path, bbox=bounds, **kwargs)
+    # kwargs = {
+    #     "verify_buffers": "YES" if config.get("VERIFY_BUFFERS") else "NO"
+    # }
+
+    with fsspec.open(gis_path) as f:
+        gdf = gpd.read_parquet(f)
+       
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
 
-    # Before we exit, save the GeoDataFrame as a pickle file, for future speedups!
-    save_pickle(geotype, gdf, high_resolution, bounds)
+    # # Before we exit, save the GeoDataFrame as a pickle file, for future speedups!
+    # save_pickle(geotype, gdf, high_resolution, bounds)
 
     return gdf
 
