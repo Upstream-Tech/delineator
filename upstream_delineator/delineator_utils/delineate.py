@@ -222,7 +222,12 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         catchments_gdf.drop(columns=['index'], inplace=True)
     except:
         pass
-    gages_gdf = gpd.overlay(gages_gdf, catchments_gdf, how="intersection", make_valid=True)
+ 
+    # Optimization to filter catchments_gdf before running intersections
+    xmin, ymin, xmax, ymax = gages_gdf.total_bounds
+    eps = 1e-7
+    gage_catchments_gdf = catchments_gdf.cx[xmin-eps:xmax+eps, ymin-eps:ymax+eps]
+    gages_gdf = gpd.overlay(gages_gdf, gage_catchments_gdf, how="intersection", make_valid=True)
     gages_gdf.set_index('id', inplace=True)
     gages_gdf.set_crs(crs=PROJ_WGS84)
 
