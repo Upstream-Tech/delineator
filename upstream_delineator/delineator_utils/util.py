@@ -256,8 +256,12 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     If the .pkl does not exist, create it for faster processing in the future,
     since reading flatgeobuf files is slow.
     """
+    import time
+    start_time = time.time()
     with fsspec.open(MEGABASINS_PATH) as f:
         megabasins_gdf = gpd.read_parquet(f, bbox=bounds)
+    end_time = time.time()
+    print(f"Seconds: {(end_time - start_time)}")
 
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
     megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
@@ -376,9 +380,12 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
     # kwargs = {
     #     "verify_buffers": "YES" if config.get("VERIFY_BUFFERS") else "NO"
     # }
-
+    import time
+    start_time = time.time()
     with fsspec.open(gis_path) as f:
         gdf = gpd.read_parquet(f)
+    end_time = time.time()
+    print(f"Seconds: {(end_time - start_time)}")
        
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
