@@ -326,7 +326,6 @@ def http_session():
         total=5,
         redirect=1,
         backoff_factor=0.5,
-        backoff_jitter=0.5,
         status_forcelist=(500, 502, 503, 504),
     )
     adapter = requests.adapters.HTTPAdapter(max_retries=retry)
