@@ -364,11 +364,10 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
 
     local_path = f"{config.get('CACHE_DIR')}/{file_name}"
     download_if_missing(f"{remote_dir}/{file_name}", local_path)
-       
 
     if config.get("VERBOSE"): print(f"Reading geodata in {local_path}")
     gdf = gpd.read_parquet(local_path)
-       
+    
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
 
