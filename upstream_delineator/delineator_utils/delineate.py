@@ -273,8 +273,8 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     # if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, 'before')
 
     # For debugging mostly
-    G = make_river_network(subbasins_gdf, terminal_comid)
-    if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/network_before')
+    # G = make_river_network(subbasins_gdf, terminal_comid)
+    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/network_before')
 
     # Create two copies of river network data!
     # `allrivers_gdf` will contain all the available polylines in the watershed, a nice
@@ -333,7 +333,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         G.nodes[gage]['custom'] = True
 
     # Draw the network before consolidating? Mostly useful for debugging.
-    if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/premerge')
+    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/premerge')
 
     # CHECK FOR Null Geometries.
     # If the user has placed one of their points very close to an existing basin outlet,
