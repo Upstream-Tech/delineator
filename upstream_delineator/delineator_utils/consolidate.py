@@ -31,6 +31,8 @@ def show_area_stats(G: nx.Graph) -> None:
 
     # Step 3: Calculate statistics using NumPy
     n = len(areas)
+    min_area = np.min(areas)
+    max_area = np.max(areas)
     mean_area = np.mean(areas)
     median_area = np.median(areas)
     std_area = np.std(areas)
@@ -39,8 +41,8 @@ def show_area_stats(G: nx.Graph) -> None:
 
     # Print the results
     print("Summary statistics for subbasin areas:")
-    print("n  | Median | Mean | Std. Dev. | CV  | Skew")
-    print(f"{n},    {median_area:.3g},   {mean_area:.3g},    {std_area:.3g},   {cv:.3g},   {skewness:.3g}")
+    print(" n  | Median |  Mean  |  Min  |   Max   | Std. Dev. |  CV  | Skew")
+    print(f"{n:3} |{median_area:7.1f} |{mean_area:7.1f} |{min_area:6.1f} |{max_area:8.1f} |{std_area:10.1f} |{cv:5.2f} |{skewness:5.2f}")
 
     # Show a histogram of the unit catchment areas; mostly for development
     if AREA_HISTOGRAMS:

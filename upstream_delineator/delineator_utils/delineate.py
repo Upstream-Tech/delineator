@@ -23,7 +23,7 @@ from upstream_delineator.delineator_utils.graph_tools import (
     calculate_shreve_stream_order,
     calculate_strahler_stream_order,
     make_river_network,
-    prune_node,  
+    prune_node,
     upstream_nodes,
 )
 from upstream_delineator.delineator_utils.merit_detailed import split_catchment
@@ -60,10 +60,10 @@ def get_wshed_rows(df: gpd.GeoDataFrame, outlet_id):
 
 '''
 options:
-- just have a bunch of named args that are optional 
-- actually have a "config object" 
+- just have a bunch of named args that are optional
+- actually have a "config object"
     - this could be a dict
-    - this could be a pydantic class we define or a superclass that clients import and make instances of to enforce fields 
+    - this could be a pydantic class we define or a superclass that clients import and make instances of to enforce fields
 '''
 
 def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_dtypes: dict = None):
@@ -133,9 +133,9 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_
             # Merge the results with the master
             if G is not None:
                 pre_composed_length = len(G)
-                
+
                 G = nx.compose(G, wshed_G)
-                
+
                 # Check for overlap between graphs
                 if len(G) != pre_composed_length + len(wshed_G):
                     suspect_successors = set()
@@ -154,9 +154,9 @@ def delineate(input_csv: str, output_prefix: str, config_vals: dict = None, csv_
                 G = wshed_G
                 subbasins_gdf = wshed_subbasins_gdf
                 myrivers_gdf = wshed_rivers_gdf
-    
+
     if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, f"{output_prefix}_basins")
-    
+
     # Finally, write the results to disk
     gages_list = gages_gdf['id'].tolist()
     if config.get("WRITE_OUTPUT"):
@@ -222,7 +222,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         catchments_gdf.drop(columns=['index'], inplace=True)
     except:
         pass
- 
+
     # Optimization to filter catchments_gdf before running intersections
     xmin, ymin, xmax, ymax = gages_gdf.total_bounds
     eps = 1e-7
@@ -273,8 +273,8 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     # if config.get("PLOTS"): plot_basins(subbasins_gdf, gages_gdf, 'before')
 
     # For debugging mostly
-    # G = make_river_network(subbasins_gdf, terminal_comid)
-    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_network_before')
+    G = make_river_network(subbasins_gdf, terminal_comid)
+    if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/network_before')
 
     # Create two copies of river network data!
     # `allrivers_gdf` will contain all the available polylines in the watershed, a nice
@@ -314,7 +314,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         area = calc_area(node_poly)
         gages_gdf.at[gage_id, 'polygon_area'] = round(area, 1)
 
-    subbasins_gdf = update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gdf)
+    subbasins_gdf = update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gdf)
 
     # Now, we no longer need the downstream portion of the terminal unit catchment
     # so remove its row from the subbasins GeoDataFrame
@@ -333,7 +333,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         G.nodes[gage]['custom'] = True
 
     # Draw the network before consolidating? Mostly useful for debugging.
-    # if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/{OUTPUT_PREFIX}_premerge')
+    if config.get("NETWORK_DIAGRAMS"): draw_graph(G, f'{config.get("PLOTS_DIR")}/premerge')
 
     # CHECK FOR Null Geometries.
     # If the user has placed one of their points very close to an existing basin outlet,
@@ -492,7 +492,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     return G, subbasins_gdf, myrivers_gdf
 
 
-def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gdf):
+def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gdf):
     # Handle the case where we had more than one gage point in a single unit catchment.
     #   (1) figure out their order from upstream to downstream based on split catchment area
     #   (2) clip the polygons as appropriate
@@ -561,6 +561,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
             length = calc_length(node_line)
             myrivers_gdf.at[node, 'geometry'] = node_line
             myrivers_gdf.at[node, 'lengthkm'] = length
+
     # Next, handle the case where there are multiple gages in a single unit catchment (special treatment)
     # We need to handle these one unit catchment at a time.
     # I call these nested outlets for want of a better name.
@@ -589,6 +590,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
         first_node = gages[0]
         poly1 = gages_set.at[first_node, 'geometry']
         updated_poly = comid_poly.difference(poly1)
+        updated_poly = fix_polygon(updated_poly)
         subbasins_gdf.at[comid, 'geometry'] = updated_poly
         area = calc_area(updated_poly)
         subbasins_gdf.at[comid, 'unitarea'] = area
@@ -603,6 +605,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
         n = len(gages)
         last_node = gages[n - 1]
         last_node_poly = gages_set.at[last_node, 'geometry']
+        last_node_poly = fix_polygon(last_node_poly)
         subbasins_gdf.at[last_node, 'geometry'] = last_node_poly
         area = calc_area(last_node_poly)
         subbasins_gdf.at[last_node, 'unitarea'] = area
@@ -620,7 +623,7 @@ def update_split_catchment_geo(gage_id, gages_gdf, myrivers_gdf, rivers_gdf, sub
             updated_poly = fix_polygon(updated_poly)
             subbasins_gdf.at[gages[i], 'geometry'] = updated_poly
             area = calc_area(updated_poly)
-            subbasins_gdf.at[gage_id, 'unitarea'] = area
+            subbasins_gdf.at[gages[i], 'unitarea'] = area
 
             # Insert the new, clipped river reach polyline into our rivers GeoDataFrame
             node_line = comid_line.intersection(updated_poly)

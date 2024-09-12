@@ -168,8 +168,8 @@ def validate(gages_df: pd.DataFrame) -> bool:
 
     if not all(len(str(wid)) > 0 for wid in ids):
         raise ValueError("Every watershed outlet must have an id in the CSV file")
-    
-    # Check that all ids are valid 
+
+    # Check that all ids are valid
     gages_df['id'] = gages_df['id'].astype(str)
     if (gages_df["id"] == "0").any():
         raise ValueError("id of 0 not allowed in input csv")
@@ -262,7 +262,7 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
     megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
 
-    # Check that data is well-formed 
+    # Check that data is well-formed
     ((11 <= megabasins_gdf.BASIN) & (megabasins_gdf.BASIN <= 91)).all()
 
     return megabasins_gdf
@@ -288,7 +288,7 @@ def get_megabasins(points_gdf: GeoDataFrame) -> dict:
     excluded_points = points_gdf.loc[~points_gdf['id'].isin(gages_basins_join['id'])]
     if not excluded_points.empty:
         raise ValueError(f'These points do not fall inside any of the continental-scale megabasins.\n{excluded_points}')
-    
+
     # Needed to set this option in order to avoid a warning message in Geopandas.
     # https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
     pd.options.mode.chained_assignment = None
@@ -350,7 +350,7 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
 
     :param geotype: either "catchments" or "rivers" depending on which one we want to open.
     :param basin: MERIT-Basins megabasin.
-      
+
     :return: a GeoPandas GeoDataFrame
 
     """
@@ -367,7 +367,7 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
 
     if config.get("VERBOSE"): print(f"Reading geodata in {local_path}")
     gdf = gpd.read_parquet(local_path)
-    
+
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
     gdf.set_crs(PROJ_WGS84, inplace=True, allow_override=True)
 
