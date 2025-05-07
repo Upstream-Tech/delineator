@@ -1,6 +1,5 @@
 import graphviz
 import networkx as nx
-from PIL import Image
 
 from upstream_delineator import config
 
@@ -67,10 +66,6 @@ def draw_graph(G: nx.DiGraph, filename: str, title="River Network Graph"):
 
     # Save the graph as a file and render it
     dot.render(filename, format=config.get("DIAGRAM_FORMAT"), cleanup=True)
-
-    # Display the graph using PIL
-    # image = Image.open(filename + "." + config.get("DIAGRAM_FORMAT"))
-    # image.show()
 
 
 if __name__ == "__main__":
