@@ -14,7 +14,6 @@ import pandas as pd
 import pyproj
 import shapely
 from geopandas import GeoDataFrame
-from geopandas.io.file import _read_file_pyogrio
 from numpy import random
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.ops import unary_union
@@ -252,12 +251,12 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     The program uses this data to determine what dataset is needed for analyses.
     I refer to the MERIT-Basins Pfafstetter Level 2 basins as megabasins.
 
-    This function gets the data from a geoparquet file, downloading it into the CACHE_DIR if it does not exist.
+    This function gets the data from a gpkg file, downloading it into the CACHE_DIR if it does not exist.
     """
-    local_path = f"{config.get('CACHE_DIR')}/megabasins.geoparquet"
+    local_path = f"{config.get('CACHE_DIR')}/megabasins.gpkg"
     download_if_missing(MEGABASINS_PATH, local_path)
     if config.get("VERBOSE"): print(f"Reading Megabasins from {local_path}")
-    megabasins_gdf = gpd.read_parquet(local_path, bbox=bounds)
+    megabasins_gdf = gpd.read_file(local_path, bbox=bounds)
 
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
     megabasins_gdf.to_crs(PROJ_WGS84, inplace=True)
@@ -356,10 +355,10 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
     """
 
     if geotype == "catchments":
-        file_name = f"cat_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.geoparquet"
+        file_name = f"cat_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.gpkg"
         remote_dir = CATCHMENT_PATH
     elif geotype == "rivers":
-        file_name = f"riv_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.geoparquet"
+        file_name = f"riv_pfaf_{basin}_MERIT_Hydro_v07_Basins_v01.gpkg"
         remote_dir = RIVER_PATH
 
     local_path = f"{config.get('CACHE_DIR')}/{file_name}"
