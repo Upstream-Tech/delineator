@@ -27,7 +27,7 @@ def show_area_stats(G: nx.Graph) -> None:
     :param G:
     :return: None
     """
-    areas = [data['area'] for node, data in G.nodes(data=True)]
+    areas = [data['area'] for node, data in G.nodes(data=True) if 'area' in data]
 
     # Step 3: Calculate statistics using NumPy
     n = len(areas)

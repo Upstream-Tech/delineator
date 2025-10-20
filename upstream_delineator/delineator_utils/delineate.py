@@ -294,7 +294,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
 
     # For now, put the split polygon geometry into a field in `gages_gdf`
     gages_gdf['polygon'] = None
-    gages_gdf['polygon_area'] = 0
+    gages_gdf['polygon_area'] = 0.0
 
     # Iterate over the gages, and run `split_catchment()` for every gage
     for gage_id in gages_gdf.index:
@@ -319,7 +319,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     # Now, we no longer need the downstream portion of the terminal unit catchment
     # so remove its row from the subbasins GeoDataFrame
     subbasins_gdf = subbasins_gdf.drop(terminal_comid)
-    subbasins_gdf.at[terminal_node_id, 'nextdown'] = 0
+    subbasins_gdf.at[terminal_node_id, 'nextdown'] = int(0)
 
     # Create a NETWORK GRAPH of the river basin.
     if config.get("VERBOSE"): print("Creating Network GRAPH")
@@ -407,14 +407,14 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         # After the dissolve operation, no way to preserve correct information in column 'nextdown'
         # But it is present in the Graph, so update the GeoDataFrame subbasins_gdf with that information
         # Add column `nextdownid` and the stream orders based on data in the graph
-        subbasins_gdf['nextdown'] = 0
+        subbasins_gdf['nextdown'] = int(0)
 
         for idx in subbasins_gdf.index:
             try:
                 nextdown = list(G.successors(idx))[0]
             except Exception:
                 nextdown = 0
-            subbasins_gdf.at[idx, 'nextdown'] = nextdown
+            subbasins_gdf.at[idx, 'nextdown'] = int(nextdown)
 
     # Round all the areas to four decimals (just for appearances)
     subbasins_gdf['unitarea'] = subbasins_gdf['unitarea'].round(1)
@@ -450,7 +450,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
             nextdown = list(G.successors(idx))[0]
         except Exception:
             nextdown = 0
-        myrivers_gdf.at[idx, 'nextdown'] = nextdown
+        myrivers_gdf.at[idx, 'nextdown'] = int(nextdown)
         myrivers_gdf.at[idx, 'strahler_order'] = G.nodes[idx]['strahler_order']
         myrivers_gdf.at[idx, 'shreve_order'] = G.nodes[idx]['shreve_order']
 
@@ -527,7 +527,7 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
         selected_rows.drop(columns=['COMID'], inplace=True)
 
         # Add the column `nextdown` to our temporary GeoDataFrame selected_rows to prevent type problems below
-        selected_rows['nextdown'] = -999
+        selected_rows['nextdown'] = int(-999)
 
         # Here is where we add the newly-created split catchments corresponding to our outlet points.
         subbasins_gdf = pd.concat([subbasins_gdf, selected_rows])
@@ -537,9 +537,9 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
         # Add the column `nextdown`; we will populate it below
 
         for node, comid in new_nodes.items():
-            rows = subbasins_gdf['nextdown'] == comid
-            subbasins_gdf.loc[rows, 'nextdown'] = node
-            subbasins_gdf.at[node, 'nextdown'] = comid
+            rows = subbasins_gdf['nextdown'] == int(comid)
+            subbasins_gdf.loc[rows, 'nextdown'] = int(node)
+            subbasins_gdf.at[node, 'nextdown'] = int(comid)
 
             # Subtract the polygon geometry of the split catchment from its parent unit catchment
             comid_poly = subbasins_gdf.loc[comid, 'geometry']
@@ -574,7 +574,7 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
         # This is the same as largest area to smallest area
         gages_set.sort_values(by='unitarea', inplace=True)
         # This one-liner fills in the correct network connection information for nested outlets
-        gages_set['nextdown'] = gages_set.index.to_series().shift(-1).fillna(comid)
+        gages_set['nextdown'] = gages_set.index.to_series().shift(-1).fillna(int(comid))
 
         gages_set.sort_values(by='unitarea', ascending=False, inplace=True)
         subbasins_gdf = pd.concat([subbasins_gdf, gages_set])
@@ -633,10 +633,10 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
 
         # After the last nested gage, we need to fix the connection info for
         # any rows that previously had the unit catchment with comid as its 'nextdown'
-        rows = subbasins_gdf['nextdown'] == comid
+        rows = subbasins_gdf['nextdown'] == int(comid)
         indices = list(rows.index[rows])
         indices.remove(first_node)
-        subbasins_gdf.loc[indices, 'nextdown'] = last_node
+        subbasins_gdf.loc[indices, 'nextdown'] = int(last_node)
     return subbasins_gdf
 
 

@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 import warnings
-from functools import cache, partial
+from functools import cache
 from typing import Union
 import requests
 
@@ -200,17 +200,17 @@ def calc_area(poly: Polygon) -> float:
     if poly.is_empty:
         return 0
 
-    projected_poly = shapely.ops.transform(
-        partial(
-            pyproj.transform,
-            pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(
-                proj='aea',
-                lat_1=poly.bounds[1],
-                lat_2=poly.bounds[3]
-            )
-        ),
-        poly)
+    aea_proj = pyproj.Proj(
+        proj='aea',
+        lat_1=poly.bounds[1],
+        lat_2=poly.bounds[3]
+    )
+    transformer = pyproj.Transformer.from_proj(
+        pyproj.Proj(init=PROJ_WGS84),
+        aea_proj,
+        always_xy=True
+    )
+    projected_poly = shapely.ops.transform(transformer.transform, poly)
 
     # Get the area in m^2
     return projected_poly.area / 1e6
@@ -229,17 +229,17 @@ def calc_length(line: LineString) -> float:
     if line.is_empty:
         return 0
 
-    projected_line = shapely.ops.transform(
-        partial(
-            pyproj.transform,
-            pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(
-                proj='aea',
-                lat_1=line.bounds[1],
-                lat_2=line.bounds[3]
-            )
-        ),
-        line)
+    aea_proj = pyproj.Proj(
+        proj='aea',
+        lat_1=line.bounds[1],
+        lat_2=line.bounds[3]
+    )
+    transformer = pyproj.Transformer.from_proj(
+        pyproj.Proj(init=PROJ_WGS84),
+        aea_proj,
+        always_xy=True
+    )
+    projected_line = shapely.ops.transform(transformer.transform, line)
 
     # Get the area in m^2
     return projected_line.length / 1e3
