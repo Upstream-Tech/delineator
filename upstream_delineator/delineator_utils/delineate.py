@@ -41,6 +41,7 @@ from upstream_delineator.delineator_utils.util import (
     save_network,
     validate,
     write_geodata,
+    ensure_int,
 )
 
 # Shapely throws a bunch of FutureWarnings. Safe to ignore for now, as long as we
@@ -243,7 +244,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     assert len(terminal_node_df) == 1, "Should only have one outlet per watershed"
     terminal_node_id = terminal_node_df.index[0]
     # The terminal comid is the unit catchment that contains (overlaps) the outlet point
-    terminal_comid = terminal_node_df['COMID'].iat[0]
+    terminal_comid = int(terminal_node_df['COMID'].iat[0])
 
     # Let upstream_comids be the list of unit catchments (and river reaches) that are in the basin
     upstream_comids = []
@@ -255,7 +256,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     # of the outlet, and therefore we cannot process them to get expected results.
     gage_list = gages_gdf.index.tolist()
     for id in gage_list:
-        comid = gages_gdf.at[id, 'COMID']
+        comid = int(gages_gdf.at[id, 'COMID'])
         if comid not in upstream_comids:
             gages_gdf.drop(id, inplace=True)
             raise Warning(f"The point with id = {id} is not contained in the watershed of the first point.")
@@ -298,7 +299,8 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
 
     # Iterate over the gages, and run `split_catchment()` for every gage
     for gage_id in gages_gdf.index:
-        comid = gages_gdf.at[gage_id, 'COMID']
+        gage_id = int(gage_id)
+        comid = int(gages_gdf.at[gage_id, 'COMID'])
         lat = gages_gdf.at[gage_id, 'lat']
         lng = gages_gdf.at[gage_id, 'lng']
         catchment_poly = subbasins_gdf.loc[comid, 'geometry']
@@ -402,6 +404,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
         subbasins_gdf.geometry = subbasins_gdf.geometry.apply(lambda p: close_holes(p, 0))
         subbasins_gdf.reset_index(inplace=True)
         subbasins_gdf.rename(columns={'target': 'comid'}, inplace=True)
+        subbasins_gdf['comid'] = subbasins_gdf['comid'].astype(int)
         subbasins_gdf.set_index('comid', inplace=True)
 
         # After the dissolve operation, no way to preserve correct information in column 'nextdown'
@@ -435,6 +438,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
             myrivers_gdf = myrivers_gdf.dissolve(by="target", aggfunc=agg)
             myrivers_gdf.reset_index(inplace=True)
             myrivers_gdf.rename(columns={'target': 'comid'}, inplace=True)
+            myrivers_gdf['comid'] = myrivers_gdf['comid'].astype(int)
             myrivers_gdf.set_index('comid', inplace=True)
 
     # We can now delete the river reach segment that belonged to the downstream portion of the
@@ -446,6 +450,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
 
     # Add the fields `nextdown` and the stream orders to the rivers.
     for idx in myrivers_gdf.index:
+        idx = int(idx)
         try:
             nextdown = list(G.successors(idx))[0]
         except Exception:
@@ -460,6 +465,7 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
     subbasins_gdf['shreve_order'] = 0
 
     for idx in subbasins_gdf.index:
+        idx = int(idx)
         subbasins_gdf.at[idx, 'strahler_order'] = G.nodes[idx]['strahler_order']
         subbasins_gdf.at[idx, 'shreve_order'] = G.nodes[idx]['shreve_order']
 
@@ -478,8 +484,10 @@ def get_watershed(gages_gdf: gpd.GeoDataFrame, megabasin: int, catchments_gdf, r
 
     subbasins_gdf.reset_index(inplace=True)
     subbasins_gdf.rename(columns={'index': 'comid'}, inplace=True)
+    subbasins_gdf['comid'] = subbasins_gdf['comid'].astype(int)
     myrivers_gdf.reset_index(inplace=True)
     myrivers_gdf.rename(columns={'index': 'comid'}, inplace=True)
+    myrivers_gdf['comid'] = myrivers_gdf['comid'].astype(int)
 
     # The rivers data will no longer be accurate, so drop these columns
     cols = ["lengthdir", "sinuosity", "slope", "uparea", "order", "strmDrop_t", "slope_taud", "NextDownID",
@@ -659,6 +667,9 @@ def make_gages_gdf(input_csv: str, csv_dtypes: dict =None) -> gpd.GeoDataFrame:
                            dtype=dtype)
     # Check that the CSV file includes at a minimum: id, lat, lng and that all values are appropriate
     validate(gages_df)
+
+    # Convert id to integer to ensure consistent node IDs in graph
+    gages_df['id'] = gages_df['id'].apply(ensure_int)
 
     # When a row's id matches its outlet_id, it is an outlet
     gages_df["is_outlet"] = gages_df["outlet_id"] == gages_df["id"]

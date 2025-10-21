@@ -34,6 +34,30 @@ assert MEGABASINS_PATH
 simpledec = re.compile(r"\d*\.\d+")
 
 
+def ensure_int(value) -> int:
+    """
+    Safely convert a value to an integer.
+    Handles string representations of numbers as well as numeric types.
+    
+    Args:
+        value: Value to convert to int (can be str, float, int, etc.)
+    
+    Returns:
+        int: The converted integer value
+        
+    Raises:
+        ValueError: If the value cannot be converted to a valid integer
+    """
+    try:
+        if isinstance(value, str):
+            # Try to convert string to float first (handles "1.0" -> 1)
+            return int(float(value))
+        else:
+            return int(value)
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Cannot convert '{value}' to int: {e}")
+
+
 def get_largest(input_poly: Union[MultiPolygon, Polygon]) -> Polygon:
     """
     Converts a Shapely MultiPolygon to a Shapely Polygon

@@ -17,6 +17,10 @@ def make_river_network(df: DataFrame, terminal_node=None) -> nx.DiGraph:
 
     # Populate the graph's nodes and edges.
     for node_id, nextdown in df['nextdown'].items():
+        # Ensure node_id is an integer
+        node_id = int(node_id)
+        nextdown = int(nextdown)
+        
         # Add node with comid as node ID
         G.add_node(node_id)
         G.nodes[node_id]['area'] = df.at[node_id, 'unitarea']
@@ -118,6 +122,10 @@ def insert_node(G: nx.DiGraph, node, comid) -> nx.DiGraph:
     into a unit catchment that is a "leaf" node, or one with a Strahler order 1
     or into a "stem" node, one with Strahler order > 1.
     """
+    
+    # Ensure both node and comid are integers
+    node = int(node)
+    comid = int(comid)
 
     # Get the Strahler order of the node we're inserting into.
     order = G.nodes[comid]['strahler_order']
