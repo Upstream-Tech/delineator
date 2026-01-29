@@ -38,7 +38,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="Missing column.*id"):
+        with pytest.raises(ValueError, match=r"Missing column.*id"):
             validate(df)
 
     def test_validate_missing_lat_column(self):
@@ -51,7 +51,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="Missing column.*lat"):
+        with pytest.raises(ValueError, match=r"Missing column.*lat"):
             validate(df)
 
     def test_validate_missing_lng_column(self):
@@ -64,7 +64,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="Missing column.*lng"):
+        with pytest.raises(ValueError, match=r"Missing column.*lng"):
             validate(df)
 
     def test_validate_missing_outlet_id_column(self):
@@ -77,7 +77,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="Missing column.*outlet_id"):
+        with pytest.raises(ValueError, match=r"Missing column.*outlet_id"):
             validate(df)
 
     def test_validate_duplicate_ids(self):
@@ -105,7 +105,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="lat.*not numeric"):
+        with pytest.raises(ValueError, match=r"lat.*not numeric"):
             validate(df)
 
     def test_validate_lat_too_low(self):
@@ -119,7 +119,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="latitude.*greater than -60"):
+        with pytest.raises(ValueError, match=r"latitude.*greater than -60"):
             validate(df)
 
     def test_validate_lat_too_high(self):
@@ -133,7 +133,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="latitude.*less than 85"):
+        with pytest.raises(ValueError, match=r"latitude.*less than 85"):
             validate(df)
 
     def test_validate_lng_too_low(self):
@@ -147,7 +147,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="longitude.*greater than -180"):
+        with pytest.raises(ValueError, match=r"longitude.*greater than -180"):
             validate(df)
 
     def test_validate_lng_too_high(self):
@@ -161,7 +161,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="longitude.*less than 180"):
+        with pytest.raises(ValueError, match=r"longitude.*less than 180"):
             validate(df)
 
     def test_validate_id_zero_not_allowed(self):
@@ -189,7 +189,7 @@ class TestValidateFunction:
             }
         )
 
-        with pytest.raises(ValueError, match="outlet_id.*must reference id"):
+        with pytest.raises(ValueError, match=r"outlet_id.*must reference id"):
             validate(df)
 
 

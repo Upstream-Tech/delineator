@@ -288,9 +288,10 @@ def get_watershed(
     subbasins_gdf = catchments_gdf.loc[upstream_comids]
     # Add lat, lng, and NextDownID to subbasins_gdf.
     subbasins_gdf = subbasins_gdf.join(rivers_gdf[["lat", "lng", "NextDownID"]])
-    # Re-name the NextDownID field, and make sure it is an integer
+    # Re-name the NextDownID field. Use object dtype to support mixed int/string IDs
+    # (COMIDs are integers but custom outlet IDs may be strings)
     subbasins_gdf.rename(columns={"NextDownID": "nextdown"}, inplace=True)
-    subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(int)
+    subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(object)
     subbasins_gdf["custom"] = (
         False  # Adds a column that shows whether a subbasin is connected to a custom pour point
     )
@@ -319,7 +320,7 @@ def get_watershed(
 
     # For now, put the split polygon geometry into a field in `gages_gdf`
     gages_gdf["polygon"] = None
-    gages_gdf["polygon_area"] = 0
+    gages_gdf["polygon_area"] = 0.0  # Use float to allow fractional areas
 
     # Iterate over the gages, and run `split_catchment()` for every gage
     for gage_id in gages_gdf.index:
@@ -452,7 +453,9 @@ def get_watershed(
         # After the dissolve operation, no way to preserve correct information in column 'nextdown'
         # But it is present in the Graph, so update the GeoDataFrame subbasins_gdf with that information
         # Add column `nextdownid` and the stream orders based on data in the graph
-        subbasins_gdf["nextdown"] = 0
+        # Use object dtype to support mixed int/string IDs
+        subbasins_gdf["nextdown"] = None
+        subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(object)
 
         for idx in subbasins_gdf.index:
             try:
@@ -490,6 +493,9 @@ def get_watershed(
         pass  # TODO why are we catching all exceptions?
 
     # Add the fields `nextdown` and the stream orders to the rivers.
+    # Initialize nextdown as object dtype to support mixed int/string IDs
+    myrivers_gdf["nextdown"] = None
+    myrivers_gdf["nextdown"] = myrivers_gdf["nextdown"].astype(object)
     for idx in myrivers_gdf.index:
         try:
             nextdown = next(iter(G.successors(idx)))

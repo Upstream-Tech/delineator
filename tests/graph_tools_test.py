@@ -104,9 +104,9 @@ class TestStreamOrderCalculations:
 
         # All nodes in unbranched network should have order 1
         for node in G.nodes():
-            assert (
-                G.nodes[node]["strahler_order"] == 1
-            ), f"Node {node} should have Strahler order 1"
+            assert G.nodes[node]["strahler_order"] == 1, (
+                f"Node {node} should have Strahler order 1"
+            )
 
     def test_strahler_order_symmetric_network(self):
         """Test Strahler order on symmetric branching network."""
@@ -115,9 +115,9 @@ class TestStreamOrderCalculations:
 
         # Headwaters should have order 1
         for node in ["A", "B", "E", "F"]:
-            assert (
-                G.nodes[node]["strahler_order"] == 1
-            ), f"Headwater {node} should have order 1"
+            assert G.nodes[node]["strahler_order"] == 1, (
+                f"Headwater {node} should have order 1"
+            )
 
         # C and D both receive two order-1 streams, so they become order 2
         assert G.nodes["C"]["strahler_order"] == 2

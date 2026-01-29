@@ -11,27 +11,24 @@ from pathlib import Path
 
 import pytest
 
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_environment():
-    """
-    Set up environment variables pointing to remote hydrology data sources.
-    These are publicly available datasets for MERIT-Hydro.
-    """
-    os.environ["CATCHMENT_PATH"] = (
-        "https://public-hydrology-data.upstream.tech/catchments"
-    )
-    os.environ["RIVER_PATH"] = "https://public-hydrology-data.upstream.tech/rivers"
-    os.environ["FLOW_DIR_PATH"] = (
-        "https://public-hydrology-data.upstream.tech/merit_flowdir.tif"
-    )
-    os.environ["ACCUM_PATH"] = (
-        "https://public-hydrology-data.upstream.tech/merit_accum.tif"
-    )
-    os.environ["MEGABASINS_PATH"] = (
-        "https://public-hydrology-data.upstream.tech/merit_basins_lvl2.gpkg"
-    )
-    yield
+# Set environment variables at module load time, before any imports
+# These are required by upstream_delineator modules at import time
+os.environ.setdefault(
+    "CATCHMENT_PATH", "https://public-hydrology-data.upstream.tech/catchments"
+)
+os.environ.setdefault(
+    "RIVER_PATH", "https://public-hydrology-data.upstream.tech/rivers"
+)
+os.environ.setdefault(
+    "FLOW_DIR_PATH", "https://public-hydrology-data.upstream.tech/merit_flowdir.tif"
+)
+os.environ.setdefault(
+    "ACCUM_PATH", "https://public-hydrology-data.upstream.tech/merit_accum.tif"
+)
+os.environ.setdefault(
+    "MEGABASINS_PATH",
+    "https://public-hydrology-data.upstream.tech/merit_basins_lvl2.gpkg",
+)
 
 
 @pytest.fixture(scope="session")

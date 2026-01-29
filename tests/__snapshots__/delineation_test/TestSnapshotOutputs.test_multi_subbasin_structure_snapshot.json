@@ -1,0 +1,12 @@
+{
+  "custom_nodes": [
+    "main_outlet",
+    "upstream1",
+    "upstream2"
+  ],
+  "max_strahler_order": 4,
+  "num_edges": 55,
+  "num_nodes": 56,
+  "num_subbasins": 56,
+  "total_area_km2": 2924.4
+}

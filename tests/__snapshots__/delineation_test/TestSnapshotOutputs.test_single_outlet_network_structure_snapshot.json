@@ -1,0 +1,12 @@
+{
+  "custom_nodes": [
+    "outlet1"
+  ],
+  "max_shreve_order": 16,
+  "max_strahler_order": 4,
+  "num_edges": 54,
+  "num_nodes": 55,
+  "terminal_nodes": [
+    "outlet1"
+  ]
+}
