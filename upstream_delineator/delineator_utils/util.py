@@ -4,24 +4,23 @@ import pickle
 import re
 import warnings
 from functools import cache, partial
-from typing import Union
-import requests
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
-import networkx
+import networkx as nx
+import numpy as np
 import pandas as pd
 import pyproj
+import requests
 import shapely
 from geopandas import GeoDataFrame
-from numpy import random
 from shapely.geometry import LineString, MultiPolygon, Polygon
 from shapely.ops import unary_union
 
 from upstream_delineator import config
 
 # The WGS84 projection string, used in a few places
-PROJ_WGS84 = 'EPSG:4326'
+PROJ_WGS84 = "EPSG:4326"
 CATCHMENT_PATH = os.getenv("CATCHMENT_PATH")
 assert CATCHMENT_PATH
 RIVER_PATH = os.getenv("RIVER_PATH")
@@ -34,7 +33,7 @@ assert MEGABASINS_PATH
 simpledec = re.compile(r"\d*\.\d+")
 
 
-def get_largest(input_poly: Union[MultiPolygon, Polygon]) -> Polygon:
+def get_largest(input_poly: MultiPolygon | Polygon) -> Polygon:
     """
     Converts a Shapely MultiPolygon to a Shapely Polygon
     For multipart polygons, will only keep the largest polygon
@@ -114,7 +113,7 @@ def find_repeated_elements(lst: list) -> list:
 
 def mround(match):
     # Utility function for rounding the coordinates in GeoJSON files to make them smaller
-    return "{:.5f}".format(float(match.group()))
+    return f"{float(match.group()):.5f}"
 
 
 def validate(gages_df: pd.DataFrame) -> bool:
@@ -131,19 +130,19 @@ def validate(gages_df: pd.DataFrame) -> bool:
 
     """
     cols = gages_df.columns
-    required_cols = ['id', 'lat', 'lng', 'outlet_id']
+    required_cols = ["id", "lat", "lng", "outlet_id"]
     for col in required_cols:
         if col not in cols:
             raise ValueError(f"Missing column in CSV file: {col}")
 
     # Check that the ids are all unique
-    if len(gages_df['id'].unique()) != len(gages_df):
+    if len(gages_df["id"].unique()) != len(gages_df):
         raise ValueError("Each id in your CSV file must be unique.")
 
     # Check that lat, lng are numeric
-    fields = ['lat', 'lng']
+    fields = ["lat", "lng"]
     for field in fields:
-        if gages_df[field].dtype != 'float64':
+        if gages_df[field].dtype != "float64":
             raise ValueError(f"In outlets CSV, the column {field} is not numeric.")
 
     # Check that all the lats are in the right range
@@ -169,7 +168,7 @@ def validate(gages_df: pd.DataFrame) -> bool:
         raise ValueError("Every watershed outlet must have an id in the CSV file")
 
     # Check that all ids are valid
-    gages_df['id'] = gages_df['id'].astype(str)
+    gages_df["id"] = gages_df["id"].astype(str)
     if (gages_df["id"] == "0").any():
         raise ValueError("id of 0 not allowed in input csv")
 
@@ -178,8 +177,8 @@ def validate(gages_df: pd.DataFrame) -> bool:
         raise ValueError("Outlet ids must be unique. No duplicates are allowed!")
 
     # Check that `outlet_id` references outlet contained in CSV
-    gages_df['outlet_id'] = gages_df['outlet_id'].astype(str)
-    outlet_ids = set(gages_df['outlet_id'])
+    gages_df["outlet_id"] = gages_df["outlet_id"].astype(str)
+    outlet_ids = set(gages_df["outlet_id"])
     ids = set(ids)
     if not outlet_ids.issubset(ids):
         raise ValueError("outlet_id's must reference id's in the same input CSV")
@@ -204,13 +203,10 @@ def calc_area(poly: Polygon) -> float:
         partial(
             pyproj.transform,
             pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(
-                proj='aea',
-                lat_1=poly.bounds[1],
-                lat_2=poly.bounds[3]
-            )
+            pyproj.Proj(proj="aea", lat_1=poly.bounds[1], lat_2=poly.bounds[3]),
         ),
-        poly)
+        poly,
+    )
 
     # Get the area in m^2
     return projected_poly.area / 1e6
@@ -233,13 +229,10 @@ def calc_length(line: LineString) -> float:
         partial(
             pyproj.transform,
             pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(
-                proj='aea',
-                lat_1=line.bounds[1],
-                lat_2=line.bounds[3]
-            )
+            pyproj.Proj(proj="aea", lat_1=line.bounds[1], lat_2=line.bounds[3]),
         ),
-        line)
+        line,
+    )
 
     # Get the area in m^2
     return projected_line.length / 1e3
@@ -255,7 +248,8 @@ def load_megabasins(bounds: tuple[float]) -> gpd.GeoDataFrame:
     """
     local_path = f"{config.get('CACHE_DIR')}/megabasins.gpkg"
     download_if_missing(MEGABASINS_PATH, local_path)
-    if config.get("VERBOSE"): print(f"Reading Megabasins from {local_path}")
+    if config.get("VERBOSE"):
+        print(f"Reading Megabasins from {local_path}")
     megabasins_gdf = gpd.read_file(local_path, bbox=bounds)
 
     # The CRS string in the flatgeobuf file is EPSG 4326 but does not match verbatim, so set it here
@@ -276,26 +270,29 @@ def get_megabasins(points_gdf: GeoDataFrame) -> dict:
         A dictionary, keys are the unique megabasins: integers from 11 to 91.
         Values are lists of outlet points (type is variable, whatever the user entered in the input CSV file)
     """
-    all_points = unary_union(points_gdf['geometry'])
+    all_points = unary_union(points_gdf["geometry"])
     megabasins_gdf = load_megabasins(all_points.bounds)
-    if config.get("VERBOSE"): print("Finding out which Pfafstetter Level 2 'megabasin' your outlets are in")
+    if config.get("VERBOSE"):
+        print("Finding out which Pfafstetter Level 2 'megabasin' your outlets are in")
 
     # Overlay the gage points on the Level 2 Basins polygons to find out which
     # PFAF_2 basin each point falls inside of, using a spatial join
     gages_basins_join = gpd.overlay(points_gdf, megabasins_gdf, how="intersection")
 
-    excluded_points = points_gdf.loc[~points_gdf['id'].isin(gages_basins_join['id'])]
+    excluded_points = points_gdf.loc[~points_gdf["id"].isin(gages_basins_join["id"])]
     if not excluded_points.empty:
-        raise ValueError(f'These points do not fall inside any of the continental-scale megabasins.\n{excluded_points}')
+        raise ValueError(
+            f"These points do not fall inside any of the continental-scale megabasins.\n{excluded_points}"
+        )
 
     # Needed to set this option in order to avoid a warning message in Geopandas.
     # https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
     pd.options.mode.chained_assignment = None
 
     # Get a list of the DISTINCT Level 2 basins, and a count of how many gages in each.
-    basins_dict = gages_basins_join.groupby('BASIN')['id'].apply(list).to_dict()
+    basins_dict = gages_basins_join.groupby("BASIN")["id"].apply(list).to_dict()
 
-    return basins_dict, megabasins_gdf.set_index('BASIN')
+    return basins_dict, megabasins_gdf.set_index("BASIN")
 
 
 def make_folders():
@@ -308,9 +305,13 @@ def make_folders():
     :return: Nothing, but throws an error if it fails.
     """
     # Check that the OUTPUT directories are there. If not, try to create them.
-    folders = [config.get("OUTPUT_DIR"), config.get("PLOTS_DIR"), config.get("CACHE_DIR")]
+    folders = [
+        config.get("OUTPUT_DIR"),
+        config.get("PLOTS_DIR"),
+        config.get("CACHE_DIR"),
+    ]
     for folder in folders:
-        if folder == '':
+        if folder == "":
             continue
         else:
             folder_exists = create_folder_if_not_exists(folder)
@@ -335,12 +336,12 @@ def http_session():
 
 def download_if_missing(url: str, local_path: str):
     if not os.path.isfile(local_path):
-        if config.get("VERBOSE"): print(f"Downloading file {url}")
+        if config.get("VERBOSE"):
+            print(f"Downloading file {url}")
         with http_session().get(url, stream=True, timeout=10) as response:
             response.raise_for_status()
             with open(local_path, "wb") as file:
-                for chunk in response.iter_content(chunk_size=None):
-                    file.write(chunk)
+                file.writelines(response.iter_content(chunk_size=None))
 
 
 def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
@@ -364,7 +365,8 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
     local_path = f"{config.get('CACHE_DIR')}/{file_name}"
     download_if_missing(f"{remote_dir}/{file_name}", local_path)
 
-    if config.get("VERBOSE"): print(f"Reading geodata in {local_path}")
+    if config.get("VERBOSE"):
+        print(f"Reading geodata in {local_path}")
     gdf = gpd.read_file(local_path)
 
     # This line is necessary because some of the gis_paths provided by reachhydro.com do not include .prj files
@@ -373,8 +375,7 @@ def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:
     return gdf
 
 
-
-def fix_polygon(poly: Union[Polygon, MultiPolygon]):
+def fix_polygon(poly: Polygon | MultiPolygon):
     """
     When we use the difference() method in Shapely to subtract one polygon from another,
     it's common to end up with small slivers or unwanted geometries around the edges of
@@ -385,7 +386,9 @@ def fix_polygon(poly: Union[Polygon, MultiPolygon]):
     output: a Shapely Polygon or MultiPolygon that has been fixed to remove small slivers.
     """
     simplify_tolerance = 0.00001
-    simplified_poly = poly.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    simplified_poly = poly.simplify(
+        tolerance=simplify_tolerance, preserve_topology=True
+    )
 
     # Try buffering?
     # buffered = simplified_poly.buffer(simplify_tolerance)
@@ -400,16 +403,22 @@ def fix_polygon(poly: Union[Polygon, MultiPolygon]):
     min_area_threshold = 0.00001  # Define your own threshold
 
     # Handle MultiPolygon and Polygon cases
-    if simplified_poly.geom_type == 'Polygon':
-        cleaned_poly = simplified_poly if simplified_poly.area >= min_area_threshold else Polygon()
-    elif simplified_poly.geom_type == 'MultiPolygon':
-        cleaned_poly = MultiPolygon([poly for poly in simplified_poly.geoms if poly.area >= min_area_threshold])
+    if simplified_poly.geom_type == "Polygon":
+        cleaned_poly = (
+            simplified_poly if simplified_poly.area >= min_area_threshold else Polygon()
+        )
+    elif simplified_poly.geom_type == "MultiPolygon":
+        cleaned_poly = MultiPolygon(
+            [poly for poly in simplified_poly.geoms if poly.area >= min_area_threshold]
+        )
 
     else:
         cleaned_poly = Polygon()  # If it's neither, return an empty Polygon
 
     # Optional: Simplify again if needed
-    final_poly = cleaned_poly.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    final_poly = cleaned_poly.simplify(
+        tolerance=simplify_tolerance, preserve_topology=True
+    )
 
     return final_poly
 
@@ -418,19 +427,24 @@ def write_geodata(gdf: gpd.GeoDataFrame, fname: str):
     """
     Write a GeoDataFrame to disk in the user's pre
     """
-    if config.get("VERBOSE"): print('Writing geodata to disk')
+    if config.get("VERBOSE"):
+        print("Writing geodata to disk")
 
     # This line rounds all the vertices to fewer digits. For text-like formats GeoJSON or KML, makes smaller
     # files with minimal loss of precision. For other formats (shp, gpkg), it doesn't change file size, so don't bother.
-    if config.get("OUTPUT_EXT").lower() in ['geojson', 'kml']:
-        gdf.geometry = gdf.geometry.apply(lambda x: shapely.wkt.loads(re.sub(simpledec, mround, x.wkt)))
+    if config.get("OUTPUT_EXT").lower() in ["geojson", "kml"]:
+        gdf.geometry = gdf.geometry.apply(
+            lambda x: shapely.wkt.loads(re.sub(simpledec, mround, x.wkt))
+        )
 
     with warnings.catch_warnings():
-        warnings.simplefilter(action='ignore', category=UserWarning)
+        warnings.simplefilter(action="ignore", category=UserWarning)
         gdf.to_file(fname)
 
 
-def plot_basins(basins_gdf: gpd.GeoDataFrame, outlets_gdf: gpd.GeoDataFrame, fname: str):
+def plot_basins(
+    basins_gdf: gpd.GeoDataFrame, outlets_gdf: gpd.GeoDataFrame, fname: str
+):
     """
     Makes a plot of the unit catchments that are in the watershed
 
@@ -440,17 +454,19 @@ def plot_basins(basins_gdf: gpd.GeoDataFrame, outlets_gdf: gpd.GeoDataFrame, fna
 
     # Plot each unit catchment with a different color
     for x in basins_gdf.index:
-        color = random.rand(3, )
+        color = np.random.default_rng().random(
+            3,
+        )
         basins_gdf.loc[[x]].plot(facecolor=color, edgecolor=color, alpha=0.5, ax=ax)
 
     # Plot the gage points
-    outlets_gdf.plot(ax=ax, c='red', edgecolors='black')
+    outlets_gdf.plot(ax=ax, c="red", edgecolors="black")
 
-    plt.savefig(f'{config.get("PLOTS_DIR")}/{fname}.png')
+    plt.savefig(f"{config.get('PLOTS_DIR')}/{fname}.png")
     plt.close(fig)
 
 
-def save_network(G: networkx.Graph, prefix: str, file_ext: str):
+def save_network(G: nx.Graph, prefix: str, file_ext: str):
     """
     Saves the NetworkX graph to disk
     :param G: the graph object
@@ -463,27 +479,29 @@ def save_network(G: networkx.Graph, prefix: str, file_ext: str):
     #  especially if NetworkX has a `write_##()` method built-in. See:
     #    https://networkx.org/documentation/stable/reference/readwrite/index.html
 
-    allowed_formats = ['pkl', 'gml', 'xml', 'json']
+    allowed_formats = ["pkl", "gml", "xml", "json"]
     if file_ext not in allowed_formats:
-        print(f"River network graph not saved. Please choose one of the following formats: "
-              f"{', '.join(allowed_formats)}")
+        print(
+            f"River network graph not saved. Please choose one of the following formats: "
+            f"{', '.join(allowed_formats)}"
+        )
         raise Warning("Did not save graph data.")
 
-    filename = f'{config.get("OUTPUT_DIR")}/{prefix}_graph.{file_ext}'
+    filename = f"{config.get('OUTPUT_DIR')}/{prefix}_graph.{file_ext}"
 
-    if file_ext == 'pkl':
+    if file_ext == "pkl":
         # (1) Python pickle file
         pickle.dump(G, open(filename, "wb"))
-    elif file_ext == 'json':
+    elif file_ext == "json":
         # (2) JSON file
-        data = networkx.node_link_data(G)
+        data = nx.node_link_data(G)
         with open(filename, "w") as f:
             json.dump(data, f)
-    elif file_ext == 'gml':
+    elif file_ext == "gml":
         # (3) GML (Graph Modeling Language), a common graph file format.
-        networkx.write_gml(G, filename)
-    elif file_ext == 'xml':
+        nx.write_gml(G, filename)
+    elif file_ext == "xml":
         # (4) GraphML is an XML-based file format for graphs.
-        networkx.write_graphml(G, filename)
+        nx.write_graphml(G, filename)
     else:
-        raise ValueError(f'Unhandled file extension {file_ext}')
+        raise ValueError(f"Unhandled file extension {file_ext}")

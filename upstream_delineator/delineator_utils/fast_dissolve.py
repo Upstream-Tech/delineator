@@ -6,12 +6,12 @@ using GeoPandas
 
 Matthew Heberger found a method that works a little bit more quickly.
 
-(1) create a new rectangle out of the bounding box around all the features. 
+(1) create a new rectangle out of the bounding box around all the features.
 (2) clip the rectangle using the input layer (containing polygons).
 
 
 input: a geopandas dataframe with multiple polygons.
-output: a geopandas dataseries with a single polygon with no internal rings or "donut holes" 
+output: a geopandas dataseries with a single polygon with no internal rings or "donut holes"
 
 """
 
@@ -30,7 +30,9 @@ def buffer(poly: Polygon) -> Polygon:
     return poly.buffer(dist, join_style=2).buffer(-dist, join_style=2)
 
 
-def close_holes(poly: Polygon or MultiPolygon, area_max: float) -> Polygon or MultiPolygon:
+def close_holes(
+    poly: Polygon or MultiPolygon, area_max: float
+) -> Polygon or MultiPolygon:
     """
     Close polygon holes by limitation to the exterior ring.
     Updated to accept a MultiPolygon as input
@@ -75,8 +77,8 @@ def close_holes(poly: Polygon or MultiPolygon, area_max: float) -> Polygon or Mu
 
 def dissolve_shp(shp: str) -> gpd.GeoDataFrame:
     """
-    input is the path to a shapefile on disk. 
-    
+    input is the path to a shapefile on disk.
+
     Returns a GeoPandas dataframe containing the dissolved
     geometry
     """
@@ -91,9 +93,9 @@ def fill_geopandas(gdf: gpd.GeoDataFrame, area_max: float) -> gpd.GeoDataFrame:
 
 def dissolve_geopandas(df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
-    input is a Geopandas dataframe with multiple polygons that you want 
+    input is a Geopandas dataframe with multiple polygons that you want
       to merge and dissolve into a single polygon
-      
+
     output is a Geopandas dataframe containing a single polygon
 
     This method is much faster than using GeoPandas dissolve()
@@ -101,7 +103,7 @@ def dissolve_geopandas(df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     It creates a box around the polygons, then clips the box to
     that poly. The result is one feature instead of many.
     """
-    
+
     [left, bottom, right, top] = df.total_bounds
     left -= 1
     right += 1
@@ -120,4 +122,3 @@ def dissolve_geopandas(df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     clipped = clipped.geometry.apply(lambda p: buffer(p))
 
     return clipped
-    

@@ -16,13 +16,13 @@ def make_river_network(df: DataFrame, terminal_node=None) -> nx.DiGraph:
     G = nx.DiGraph()
 
     # Populate the graph's nodes and edges.
-    for node_id, nextdown in df['nextdown'].items():
+    for node_id, nextdown in df["nextdown"].items():
         # Add node with comid as node ID
         G.add_node(node_id)
-        G.nodes[node_id]['area'] = df.at[node_id, 'unitarea']
+        G.nodes[node_id]["area"] = df.at[node_id, "unitarea"]
         # Add edge from comid to nextdown
         # A nextdown value of 0 means this node doesn't connect to anything downstream
-        if str(nextdown) != '0' and node_id != terminal_node:
+        if str(nextdown) != "0" and node_id != terminal_node:
             G.add_edge(node_id, nextdown)
 
     return G
@@ -30,16 +30,16 @@ def make_river_network(df: DataFrame, terminal_node=None) -> nx.DiGraph:
 
 def calculate_strahler_stream_order(graph: nx.DiGraph) -> nx.DiGraph:
     """
-        Calculates the Strahler stream order for a river network that is
-        represented as a NetworkX acyclic directed graph.
-        Adds the attribute 'strahler_order' for nodes in the network.
+    Calculates the Strahler stream order for a river network that is
+    represented as a NetworkX acyclic directed graph.
+    Adds the attribute 'strahler_order' for nodes in the network.
 
-        Arguments:
-            a networkX acyclic directed Graph
-        Returns:
-            same Graph, with additional attribute on all nodes.
+    Arguments:
+        a networkX acyclic directed Graph
+    Returns:
+        same Graph, with additional attribute on all nodes.
 
-        """
+    """
     # Step 1: Determine upstream and downstream nodes
     up_nodes = {node: set() for node in graph.nodes()}
     down_nodes = {node: set() for node in graph.nodes()}
@@ -49,17 +49,19 @@ def calculate_strahler_stream_order(graph: nx.DiGraph) -> nx.DiGraph:
 
     # Step 2: Assign initial stream orders
     for node in graph.nodes():
-        graph.nodes[node]['strahler_order'] = 1
+        graph.nodes[node]["strahler_order"] = 1
 
     # Step 3: Iterate through the nodes and update stream orders
     for node in nx.topological_sort(graph):
-        upstream_orders = [graph.nodes[upstream]['strahler_order'] for upstream in up_nodes[node]]
+        upstream_orders = [
+            graph.nodes[upstream]["strahler_order"] for upstream in up_nodes[node]
+        ]
         max_order = max(upstream_orders) if upstream_orders else 0
         order_count = upstream_orders.count(max_order)
         if order_count == 1:
-            graph.nodes[node]['strahler_order'] = max_order
+            graph.nodes[node]["strahler_order"] = max_order
         else:
-            graph.nodes[node]['strahler_order'] = max_order + 1
+            graph.nodes[node]["strahler_order"] = max_order + 1
 
     return graph
 
@@ -83,12 +85,19 @@ def calculate_shreve_stream_order(graph: nx.DiGraph) -> nx.DiGraph:
         up_nodes[v].add(u)
 
     for node in graph.nodes():
-        graph.nodes[node]['shreve_order'] = 1
+        graph.nodes[node]["shreve_order"] = 1
 
     for node in nx.topological_sort(graph):
         if up_nodes[node]:
-            graph.nodes[node]['shreve_order'] = max([graph.nodes[upstream]['shreve_order']
-                                                     for upstream in up_nodes[node]]) + 1
+            graph.nodes[node]["shreve_order"] = (
+                max(
+                    [
+                        graph.nodes[upstream]["shreve_order"]
+                        for upstream in up_nodes[node]
+                    ]
+                )
+                + 1
+            )
 
     return graph
 
@@ -99,7 +108,7 @@ def calculate_num_incoming(G: nx.DiGraph) -> nx.DiGraph:
 
     for node in G.nodes():
         num_incoming = G.in_degree(node)
-        G.nodes[node]['num_incoming'] = num_incoming
+        G.nodes[node]["num_incoming"] = num_incoming
 
     return G
 
@@ -120,15 +129,15 @@ def insert_node(G: nx.DiGraph, node, comid) -> nx.DiGraph:
     """
 
     # Get the Strahler order of the node we're inserting into.
-    order = G.nodes[comid]['strahler_order']
+    order = G.nodes[comid]["strahler_order"]
 
     if order == 1:
         # LEAF NODE
         # Add the new node to the network
         G.add_node(node)
         # Set some attributes for the node that will be useful later
-        G.nodes[node]['new'] = True
-        G.nodes[node]['type'] = 'leaf'
+        G.nodes[node]["new"] = True
+        G.nodes[node]["type"] = "leaf"
         # Add the network connection (edge) from the new node to the target unit catchment with comid = comid.
         G.add_edge(node, comid)
 
@@ -136,8 +145,8 @@ def insert_node(G: nx.DiGraph, node, comid) -> nx.DiGraph:
         # STEM NODE
         # Step 1: Add the new node
         G.add_node(node)
-        G.nodes[node]['new'] = True
-        G.nodes[node]['type'] = 'stem'
+        G.nodes[node]["new"] = True
+        G.nodes[node]["type"] = "stem"
 
         # Step 2: Find incoming edges and remove them.
         predecessors = list(G.predecessors(comid))

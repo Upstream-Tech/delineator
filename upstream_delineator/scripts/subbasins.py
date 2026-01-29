@@ -4,7 +4,6 @@ import sys
 sys.path.insert(0, ".")
 
 from upstream_delineator.config import _GLOBAL_CONFIG
-
 from upstream_delineator.delineator_utils.delineate import delineate
 
 if __name__ == "__main__":
@@ -22,12 +21,12 @@ if __name__ == "__main__":
             argparser.add_argument(
                 f"--NO_{key}",
                 action="store_true",
-            ) 
+            )
         elif default_val is False:
             argparser.add_argument(
                 f"--{key}",
                 action="store_true",
-            ) 
+            )
         else:
             argparser.add_argument(
                 f"--{key}",
@@ -38,8 +37,8 @@ if __name__ == "__main__":
     config_vals = {}
     for key, val in vars(args).items():
         if key in _GLOBAL_CONFIG:
-            config_vals[key] = val 
+            config_vals[key] = val
         elif (stripped_key := key.removeprefix("NO_")) in _GLOBAL_CONFIG:
-            config_vals[stripped_key] = not val 
-    
+            config_vals[stripped_key] = not val
+
     delineate(args.input_csv, args.output_prefix, config_vals=config_vals)
