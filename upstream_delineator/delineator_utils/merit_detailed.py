@@ -6,8 +6,8 @@ first described in a a paper by Djokic and Ye at the 1999 ESRI User Conference.
 Raster-based delineation is slow and requires a lot of memory. So we only do the bare minimum,
 and use vector data for the rest of the upstream watershed.
 """
+
 import os
-from typing import Optional
 
 import numpy as np
 from numpy import ceil, floor
@@ -30,8 +30,15 @@ assert FLOW_DIR_PATH
 ACCUM_PATH = os.getenv("ACCUM_PATH")
 assert ACCUM_PATH
 
-def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly: Polygon,
-                    bSingleCatchment: bool) -> (tuple[Optional[object], float, float]):
+
+def split_catchment(
+    wid: str,
+    basin: int,
+    lat: float,
+    lng: float,
+    catchment_poly: Polygon,
+    bSingleCatchment: bool,
+) -> tuple[object | None, float, float]:
     """
     Performs the detailed pixel-scale raster-based delineation for a watershed.
 
@@ -119,6 +126,7 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
     # Anyhow, the old version worked better for me in my testing.
     # grid = Grid.from_raster(path=fdir_fname, data=fdir_fname, data_name="myflowdir", window=bounding_box,nodata=0)
     from pysheds.grid import Grid
+
     grid = Grid.from_raster(FLOW_DIR_PATH, window=bounding_box, nodata=0)
 
     # Now "clip" the rectangular flow direction grid even further so that it ONLY contains data
@@ -168,7 +176,9 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
     # if config.get("VERBOSE"): print("Snapping pour point")
 
     # Open the accumulation raster, again using windowed reading mode.
-    acc = grid.read_raster(ACCUM_PATH, data_name="acc", window=bounding_box, window_crs=grid.crs, nodata=0)
+    acc = grid.read_raster(
+        ACCUM_PATH, data_name="acc", window=bounding_box, window_crs=grid.crs, nodata=0
+    )
 
     # MASK the accumulation raster to the unit catchment POLYGON. Set any pixel that is not
     # in 'mymask' to zero. That way, the pour point will always snap to a grid cell that is
@@ -205,9 +215,12 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
     streams = acc > numpixels
     xy = (lng, lat)
     try:
-        [lng_snap, lat_snap] = grid.snap_to_mask(streams, xy)  # New version does not give you the snap distance.
+        [lng_snap, lat_snap] = grid.snap_to_mask(
+            streams, xy
+        )  # New version does not give you the snap distance.
     except Exception as e:
-        if config.get("VERBOSE"): print(f"Could not snap the pour point. Error: {e}")
+        if config.get("VERBOSE"):
+            print(f"Could not snap the pour point. Error: {e}")
         return None, None, None
 
     # Plot the accumulation grid, for debugging
@@ -216,24 +229,32 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
 
     # Plot the streams!
     if config.get("PLOTS"):
-        plot_streams(streams, catchment_poly, lat, lng, lat_snap, lng_snap, wid, numpixels)
+        plot_streams(
+            streams, catchment_poly, lat, lng, lat_snap, lng_snap, wid, numpixels
+        )
 
     # Finally, here is the raster based watershed delineation with pysheds!
-    if config.get("VERBOSE"): print(f"Delineating catchment {wid}")
+    if config.get("VERBOSE"):
+        print(f"Delineating catchment {wid}")
     try:
-        catch = grid.catchment(fdir=fdir,
-                               x=lng_snap,
-                               y=lat_snap,
-                               dirmap=dirmap,
-                               xytype='coordinate',
-                               recursionlimit=15000)
+        catch = grid.catchment(
+            fdir=fdir,
+            x=lng_snap,
+            y=lat_snap,
+            dirmap=dirmap,
+            xytype="coordinate",
+            recursionlimit=15000,
+        )
 
         # Clip the bounding box to the catchment
         # Seems optional, but turns out this line is essential.
         grid.clip_to(catch)
         clipped_catch = grid.view(catch, dtype=np.uint8)
     except Exception as e:
-        if config.get("VERBOSE"): print(f"ERROR: something went wrong during pysheds grid.catchment(). Error: {e}")
+        if config.get("VERBOSE"):
+            print(
+                f"ERROR: something went wrong during pysheds grid.catchment(). Error: {e}"
+            )
         return None, lng_snap, lat_snap
 
     # Convert high-precision raster subcatchment to a polygon using pysheds method .polygonize()
@@ -255,7 +276,9 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
         pysheds_polygon = shape
         shape_count += 1
         # The pyshseds polygon can be converted to a shapely Polygon in this one-liner
-        shapely_polygon = Polygon([[p[0], p[1]] for p in pysheds_polygon['coordinates'][0]])
+        shapely_polygon = Polygon(
+            [[p[0], p[1]] for p in pysheds_polygon["coordinates"][0]]
+        )
         shapely_polygons.append(shapely_polygon)
 
     if shape_count > 1:
@@ -275,6 +298,16 @@ def split_catchment(wid: str, basin: int, lat: float, lng: float, catchment_poly
 
     if config.get("PLOTS"):
         # plot_catchment(catch, catchment_poly, result_polygon, lat, lng, lat_snap, lng_snap, wid, dirmap)
-        plot_clipped(fdir, clipped_catch, catchment_poly, lat, lng, lat_snap, lng_snap, wid, result_polygon)
+        plot_clipped(
+            fdir,
+            clipped_catch,
+            catchment_poly,
+            lat,
+            lng,
+            lat_snap,
+            lng_snap,
+            wid,
+            result_polygon,
+        )
 
     return result_polygon, lat_snap, lng_snap

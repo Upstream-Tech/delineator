@@ -1,5 +1,7 @@
 # Upstream Delineator
 
+[![CI](https://github.com/Upstream-Tech/delineator/actions/workflows/ci.yml/badge.svg)](https://github.com/Upstream-Tech/delineator/actions/workflows/ci.yml)
+
 A set of Python scripts for delineating watersheds or drainage basins
 using data from [MERIT-Hydro](https://doi.org/10.1029/2019WR024873) and 
 [MERIT-Basins](https://doi.org/10.1029/2019WR025287). 
@@ -42,43 +44,61 @@ Instructions on how to get the data and run the script are provided below.
 
 To get started, download the latest release from this GitHub repository (or fork the repository).
 
-These scripts were developed and tested with Python version 3.11 and 3.12.
+These scripts require Python 3.12 or later.
 
-We recommend creating a Python virtual environment in which to run the script.
-Here is a good
-[introduction to virtual environments](https://python.land/virtual-environments/virtualenv)
--- why they are useful, and how to use them. You can create and activate the virtual
-environment, then install all the required packages with the following commands. 
+## Setup
 
-Open the Terminal (Linux and Mac) or Command Prompt (Windows), `cd` 
-into the cloned repo.
+We use [mise](https://mise.jdx.dev/) to manage all development tools. If you don't have mise installed, see the [mise Getting Started guide](https://mise.jdx.dev/getting-started.html).
 
-To create the virtual environment:
-```
-python3 -m venv venv
-```
-
-To activate the virtual environment (on Windows you may need to allow scripts using -- search for `Set-ExecutionPolicy`). 
-
-```
-# Windows Command Prompt or PowerShell
-venv\Scripts\activate.bat
-
-# Windows PowerShell
-venv\Scripts\Activate.ps1
-
-#Linux and MacOS venv activation
-$ source venv/bin/activate
+Clone and set up the project:
+```bash
+git clone <your-repo-url>
+cd delineator
+mise install    # Installs uv, prek, and other dev tools
+uv sync         # Installs Python dependencies
+prek install    # Installs pre-commit hooks
 ```
 
-Next, install required packages:
-```
-$ pip install .
-```
-This script uses the latest versions of Python packages circa April 2024.
+This will install all development tools (uv for dependency management, prek for pre-commit hooks) as specified in `.mise.toml`, create a virtual environment in `.venv`, and set up git hooks to run automatically on commit.
 
-Make sure that you have the correct version of numpy. The `pysheds v0.4` library
-is *not* compatible with numpy v2.0. 
+## Development
+
+### Pre-commit Hooks
+
+Pre-commit hooks will run automatically on `git commit` (installed during setup). The hooks include:
+- Ruff linting and formatting
+- Check for merge conflicts
+- Check Python AST validity
+- Check for large files
+- Forbid submodules
+
+To manually run all hooks:
+```bash
+prek run --all-files
+```
+
+To run a specific hook:
+```bash
+prek run ruff
+prek run ruff-format
+```
+
+### Manual Testing
+
+To run linting without pre-commit:
+```bash
+uv run ruff check .
+```
+
+To format code:
+```bash
+uv run ruff format .
+```
+
+To run tests (once added):
+```bash
+uv run pytest
+``` 
 
 
 # Overview of using `subbasins.py`

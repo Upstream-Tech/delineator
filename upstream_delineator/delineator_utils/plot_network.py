@@ -8,7 +8,7 @@ def area_to_size(area, max_area):
     if max_area is None:
         return 10
     else:
-        size = 0.2 + 1.2 * (area/max_area) ** 0.5
+        size = 0.2 + 1.2 * (area / max_area) ** 0.5
     return size
 
 
@@ -27,36 +27,42 @@ def draw_graph(G: nx.DiGraph, filename: str, title="River Network Graph"):
     """
 
     # Since we are going to size the nodes by area, find the largest so we can scale appropriately
-    max_area_node = max(G.nodes, key=lambda node: G.nodes[node].get('area', 0))
+    max_area_node = max(G.nodes, key=lambda node: G.nodes[node].get("area", 0))
     try:
-        max_area = G.nodes[max_area_node]['area']
+        max_area = G.nodes[max_area_node]["area"]
     except:
         max_area = None
 
     # Initialize a new directed graph in Graphviz
-    if config.get('VERTICAL_PLOT'):
+    if config.get("VERTICAL_PLOT"):
         dot = graphviz.Digraph()
     else:
-        dot = graphviz.Digraph(graph_attr={'rankdir': 'LR'})
+        dot = graphviz.Digraph(graph_attr={"rankdir": "LR"})
 
-    dot.graph_attr['label'] = title
-    dot.graph_attr['labelloc'] = 't'  # 't' for top, 'b' for bottom, 'c' for center
-    dot.graph_attr['fontsize'] = '20'  # Set the font size for the title
+    dot.graph_attr["label"] = title
+    dot.graph_attr["labelloc"] = "t"  # 't' for top, 'b' for bottom, 'c' for center
+    dot.graph_attr["fontsize"] = "20"  # Set the font size for the title
 
     # Add nodes with distance attributes as labels
     for node in G.nodes():
         label = f"{node}"
 
         if config.get("SHOW_AREA"):
-            if 'area' in G.nodes[node]:
-                area = round(G.nodes[node]['area'])
+            if "area" in G.nodes[node]:
+                area = round(G.nodes[node]["area"])
                 label = f"{label}\n{area}"
-                size = area_to_size(G.nodes[node]['area'], max_area)
+                size = area_to_size(G.nodes[node]["area"], max_area)
                 size = str(round(size, 1))
-                dot.node(str(node), width=size, height=size, fixedsize='true')
+                dot.node(str(node), width=size, height=size, fixedsize="true")
 
-        if G.nodes[node].get('custom'):
-            dot.node(str(node), label=label, style='filled', fillcolor='lightblue', fontname='Arial')
+        if G.nodes[node].get("custom"):
+            dot.node(
+                str(node),
+                label=label,
+                style="filled",
+                fillcolor="lightblue",
+                fontname="Arial",
+            )
         else:
             dot.node(str(node), label=label)
 

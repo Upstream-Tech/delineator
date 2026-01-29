@@ -22,3 +22,48 @@ dependencies = [
 name = "upstream_delineator"
 version = "0.1.1"
 description = "Delineate basins"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "ruff~=0.9",
+    "pytest~=9.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+  "F", # https://docs.astral.sh/ruff/rules/#pyflakes-f
+  "RUF", # https://docs.astral.sh/ruff/rules/#ruff-specific-rules-ruf
+  "T100", # https://docs.astral.sh/ruff/rules/debugger/
+  "PT", # https://docs.astral.sh/ruff/rules/#flake8-pytest-style-pt
+  "TC", # https://docs.astral.sh/ruff/rules/#flake8-type-checking-tc
+  "FURB", # https://docs.astral.sh/ruff/rules/#refurb-furb
+  "S", # https://docs.astral.sh/ruff/rules/#flake8-bandit-s
+  "I", # https://docs.astral.sh/ruff/rules/#isort-i
+  "INP001", # https://docs.astral.sh/ruff/rules/implicit-namespace-package/
+  "PLE", # https://docs.astral.sh/ruff/rules/#error-ple
+  "NPY", # https://docs.astral.sh/ruff/rules/#numpy-specific-rules-npy
+  "UP", # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  "ICN", # https://docs.astral.sh/ruff/rules/#flake8-import-conventions-icn
+  "TID", # https://docs.astral.sh/ruff/rules/#flake8-tidy-imports-tid
+]
+ignore = [
+  "S101", # https://docs.astral.sh/ruff/rules/assert/
+]
+allowed-confusables = ["’", "–"]
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

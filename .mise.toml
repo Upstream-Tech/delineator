@@ -1,0 +1,6 @@
+[tools]
+uv = "latest"
+prek = "latest"
+
+[settings]
+python.uv_venv_auto = true
