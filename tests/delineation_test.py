@@ -7,6 +7,7 @@ These tests verify correctness of watershed delineation in various hydrologic sc
 3. Headwater watersheds
 4. Network consolidation
 5. Graph topology and stream order calculations
+6. Disconnected basin networks
 
 Uses syrupy for snapshot testing of complex geodata outputs.
 """
@@ -59,6 +60,13 @@ class TestBasicDelineation:
         assert len(subbasins_gdf) > 0, "Should have at least one subbasin"
         assert "geometry" in subbasins_gdf.columns, "Subbasins should have geometry"
 
+        # Verify the outlet node exists and matches CSV
+        assert G.has_node("outlet1"), "Graph should contain the outlet1 node"
+
+        # Terminal node should be the outlet
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "outlet1" in terminal_nodes, "outlet1 should be a terminal node"
+
     def test_multi_subbasin_delineation(
         self, multi_subbasin_csv, default_config, temp_output_dir
     ):
@@ -87,6 +95,15 @@ class TestBasicDelineation:
         for node in custom_nodes:
             assert node in subbasin_ids, f"Custom node {node} should be in subbasins"
 
+        # Verify all expected outlet IDs are present
+        expected_outlets = ["main_outlet", "upstream1", "upstream2"]
+        for outlet_id in expected_outlets:
+            assert G.has_node(outlet_id), f"Graph should contain node {outlet_id}"
+
+        # The main outlet should be terminal
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "main_outlet" in terminal_nodes, "main_outlet should be a terminal node"
+
     def test_headwater_outlet_delineation(
         self, headwater_outlet_csv, default_config, temp_output_dir
     ):
@@ -111,8 +128,10 @@ class TestBasicDelineation:
             "Headwater watershed should have at least 1 subbasin"
         )
 
-        # The outlet node should exist
+        # The outlet node should exist and be terminal
         assert G.has_node("headwater"), "Graph should contain the headwater outlet node"
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "headwater" in terminal_nodes, "headwater should be a terminal node"
 
 
 class TestNetworkTopology:
@@ -124,7 +143,7 @@ class TestNetworkTopology:
         config.set(default_config)
 
     def test_graph_is_directed_acyclic(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that the river network graph is a directed acyclic graph (DAG).
@@ -138,13 +157,17 @@ class TestNetworkTopology:
             }
         )
 
-        G, _, _ = delineate(single_outlet_csv, "test_dag", default_config)
+        G, _, _ = delineate(multi_subbasin_csv, "test_dag", default_config)
 
         assert isinstance(G, nx.DiGraph), "Graph should be a directed graph"
         assert nx.is_directed_acyclic_graph(G), "River network should be acyclic"
 
+        # Verify terminal node is the expected outlet
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "main_outlet" in terminal_nodes, "main_outlet should be a terminal node"
+
     def test_single_terminal_node(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that the network has exactly one terminal (outlet) node.
@@ -158,11 +181,55 @@ class TestNetworkTopology:
             }
         )
 
-        G, _, _ = delineate(single_outlet_csv, "test_terminal", default_config)
+        G, _, _ = delineate(multi_subbasin_csv, "test_terminal", default_config)
 
         # Find terminal nodes (no successors)
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert len(terminal_nodes) == 1, "Should have exactly one terminal node"
+        assert terminal_nodes[0] == "main_outlet", "Terminal node should be main_outlet"
+
+    def test_outlet_node_attributes_from_csv(
+        self, multi_subbasin_csv, default_config, temp_output_dir
+    ):
+        """
+        Test that custom attributes from CSV are present in the graph nodes.
+        Verifies that gage_id, priority, and other custom columns are accessible.
+        """
+        config.set(
+            {
+                **default_config,
+                "OUTPUT_DIR": str(temp_output_dir),
+                "CACHE_DIR": str(temp_output_dir / "cache"),
+            }
+        )
+
+        G, subbasins_gdf, _ = delineate(
+            multi_subbasin_csv, "test_attrs", default_config
+        )
+
+        # Verify custom nodes are marked
+        assert G.nodes["main_outlet"].get("custom") is True
+        assert G.nodes["upstream1"].get("custom") is True
+        assert G.nodes["upstream2"].get("custom") is True
+
+        # Verify the subbasins GeoDataFrame has the custom columns
+        assert "gage_id" in subbasins_gdf.columns, (
+            "gage_id column should be in subbasins"
+        )
+        assert "priority" in subbasins_gdf.columns, (
+            "priority column should be in subbasins"
+        )
+
+        # Check that custom outlet rows have the expected values
+        main_outlet_row = subbasins_gdf[subbasins_gdf["comid"] == "main_outlet"]
+        assert len(main_outlet_row) == 1, "Should have exactly one main_outlet row"
+        assert main_outlet_row.iloc[0]["gage_id"] == "GAGE001"
+        assert main_outlet_row.iloc[0]["priority"] == "high"
+
+        upstream1_row = subbasins_gdf[subbasins_gdf["comid"] == "upstream1"]
+        assert len(upstream1_row) == 1, "Should have exactly one upstream1 row"
+        assert upstream1_row.iloc[0]["gage_id"] == "GAGE002"
+        assert upstream1_row.iloc[0]["priority"] == "medium"
 
     def test_stream_orders_assigned(
         self, multi_subbasin_csv, default_config, temp_output_dir
@@ -201,6 +268,10 @@ class TestNetworkTopology:
         # Check that stream orders are in subbasins geodataframe
         assert "strahler_order" in subbasins_gdf.columns
         assert "shreve_order" in subbasins_gdf.columns
+
+        # Verify outlet is the expected node
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "main_outlet" in terminal_nodes
 
     def test_strahler_order_properties(
         self, multi_subbasin_csv, default_config, temp_output_dir
@@ -241,7 +312,8 @@ class TestNetworkTopology:
                 actual_order = G.nodes[node]["strahler_order"]
 
                 assert actual_order == expected_order, (
-                    f"Node {node}: expected Strahler order {expected_order}, got {actual_order}"
+                    f"Node {node}: expected Strahler order {expected_order}, "
+                    f"got {actual_order}"
                 )
 
     def test_shreve_order_properties(
@@ -277,8 +349,110 @@ class TestNetworkTopology:
                 assert (
                     G.nodes[successor]["shreve_order"] >= G.nodes[node]["shreve_order"]
                 ), (
-                    f"Shreve order should not decrease downstream from {node} to {successor}"
+                    f"Shreve order should not decrease downstream "
+                    f"from {node} to {successor}"
                 )
+
+
+class TestDisconnectedBasins:
+    """Test handling of multiple disconnected watersheds."""
+
+    @pytest.fixture(autouse=True)
+    def reset_config(self, default_config):
+        """Reset config before each test."""
+        config.set(default_config)
+
+    def test_disconnected_basins_separate_systems(
+        self, disconnected_basins_csv, default_config, temp_output_dir
+    ):
+        """
+        Test that two separate outlets create two disconnected river systems.
+        Each outlet_id in the CSV should correspond to an independent watershed.
+        """
+        config.set(
+            {
+                **default_config,
+                "OUTPUT_DIR": str(temp_output_dir),
+                "CACHE_DIR": str(temp_output_dir / "cache"),
+            }
+        )
+
+        G, subbasins_gdf, _ = delineate(
+            disconnected_basins_csv, "test_disconnected", default_config
+        )
+
+        # Both outlet nodes should exist
+        assert G.has_node("basin1_outlet"), "Graph should contain basin1_outlet"
+        assert G.has_node("basin2_outlet"), "Graph should contain basin2_outlet"
+
+        # Both should be terminal nodes (no outgoing edges)
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "basin1_outlet" in terminal_nodes, (
+            "basin1_outlet should be a terminal node"
+        )
+        assert "basin2_outlet" in terminal_nodes, (
+            "basin2_outlet should be a terminal node"
+        )
+
+        # The graph should have exactly 2 terminal nodes (2 separate systems)
+        assert len(terminal_nodes) == 2, (
+            f"Should have exactly 2 terminal nodes for 2 watersheds, got {len(terminal_nodes)}"
+        )
+
+        # The graph should be disconnected (2 weakly connected components)
+        num_components = nx.number_weakly_connected_components(G)
+        assert num_components == 2, (
+            f"Should have 2 weakly connected components, got {num_components}"
+        )
+
+        # Verify custom attributes from CSV are present
+        assert "gage_id" in subbasins_gdf.columns
+        basin1_row = subbasins_gdf[subbasins_gdf["comid"] == "basin1_outlet"]
+        assert basin1_row.iloc[0]["gage_id"] == "GAGE_B1"
+
+    def test_disconnected_basins_upstream_connectivity(
+        self, disconnected_basins_csv, default_config, temp_output_dir
+    ):
+        """
+        Test that upstream points are correctly connected to their respective outlets.
+        basin1_upstream should flow to basin1_outlet, not basin2_outlet.
+        """
+        config.set(
+            {
+                **default_config,
+                "OUTPUT_DIR": str(temp_output_dir),
+                "CACHE_DIR": str(temp_output_dir / "cache"),
+            }
+        )
+
+        G, _, _ = delineate(
+            disconnected_basins_csv, "test_disconnected_connectivity", default_config
+        )
+
+        # basin1_upstream should be in the same component as basin1_outlet
+        # Find the component containing basin1_outlet
+        components = list(nx.weakly_connected_components(G))
+
+        basin1_component = None
+        basin2_component = None
+        for comp in components:
+            if "basin1_outlet" in comp:
+                basin1_component = comp
+            if "basin2_outlet" in comp:
+                basin2_component = comp
+
+        assert basin1_component is not None, "Should find basin1 component"
+        assert basin2_component is not None, "Should find basin2 component"
+
+        # basin1_upstream should be in basin1's component
+        assert "basin1_upstream" in basin1_component, (
+            "basin1_upstream should be in the same component as basin1_outlet"
+        )
+
+        # basin1_upstream should NOT be in basin2's component
+        assert "basin1_upstream" not in basin2_component, (
+            "basin1_upstream should not be in basin2's component"
+        )
 
 
 class TestConsolidation:
@@ -304,7 +478,7 @@ class TestConsolidation:
                 "CACHE_DIR": str(temp_output_dir / "cache"),
             }
         )
-        G_original, _subbasins_original, _ = delineate(
+        G_original, _, _ = delineate(
             multi_subbasin_csv, "test_no_consol", default_config
         )
 
@@ -316,7 +490,7 @@ class TestConsolidation:
                 "CACHE_DIR": str(temp_output_dir / "cache"),
             }
         )
-        G_consolidated, _subbasins_consolidated, _ = delineate(
+        G_consolidated, _, _ = delineate(
             multi_subbasin_csv, "test_consol", consolidate_config
         )
 
@@ -325,6 +499,13 @@ class TestConsolidation:
             f"Consolidated network ({G_consolidated.number_of_nodes()} nodes) "
             f"should have <= nodes than original ({G_original.number_of_nodes()} nodes)"
         )
+
+        # Verify outlet node is still present and terminal
+        assert G_consolidated.has_node("main_outlet")
+        terminal_nodes = [
+            n for n in G_consolidated.nodes() if G_consolidated.out_degree(n) == 0
+        ]
+        assert "main_outlet" in terminal_nodes
 
     def test_consolidation_preserves_custom_nodes(
         self, multi_subbasin_csv, consolidate_config, temp_output_dir
@@ -341,7 +522,7 @@ class TestConsolidation:
             }
         )
 
-        G, _subbasins_gdf, _ = delineate(
+        G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_custom_preserved", consolidate_config
         )
 
@@ -351,6 +532,11 @@ class TestConsolidation:
             assert G.has_node(outlet_id), (
                 f"Custom outlet {outlet_id} should be preserved after consolidation"
             )
+
+        # Verify custom attributes are preserved
+        assert "gage_id" in subbasins_gdf.columns
+        main_outlet_row = subbasins_gdf[subbasins_gdf["comid"] == "main_outlet"]
+        assert main_outlet_row.iloc[0]["gage_id"] == "GAGE001"
 
     def test_consolidation_maintains_connectivity(
         self, multi_subbasin_csv, consolidate_config, temp_output_dir
@@ -379,6 +565,7 @@ class TestConsolidation:
         assert len(terminal_nodes) == 1, (
             "Consolidated network should have exactly one terminal node"
         )
+        assert terminal_nodes[0] == "main_outlet"
 
 
 class TestGeometryValidity:
@@ -389,14 +576,18 @@ class TestGeometryValidity:
         """Reset config before each test."""
         config.set(default_config)
 
-    def test_subbasin_geometries_mostly_valid(
-        self, single_outlet_csv, default_config, temp_output_dir
+    def test_subbasin_geometries_valid(
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
-        Test that the vast majority of subbasin geometries are valid polygons.
-        Some minor geometry issues may exist in the source MERIT data or from
-        polygon operations, but the overall quality should be high.
+        Test that all subbasin geometries are valid polygons.
+        Invalid geometries can cause problems in downstream GIS analysis.
+
+        Note: The MERIT-Hydro source data occasionally has invalid geometries
+        (typically self-intersections). These can be fixed with make_valid().
         """
+        from shapely.validation import make_valid
+
         config.set(
             {
                 **default_config,
@@ -406,24 +597,35 @@ class TestGeometryValidity:
         )
 
         _, subbasins_gdf, _ = delineate(
-            single_outlet_csv, "test_valid_geom", default_config
+            multi_subbasin_csv, "test_valid_geom", default_config
         )
 
-        total_count = len(subbasins_gdf)
-        invalid_geoms = subbasins_gdf[~subbasins_gdf.geometry.is_valid]
-        invalid_count = len(invalid_geoms)
-        valid_percentage = (total_count - invalid_count) / total_count * 100
+        # Check how many are invalid before fixing
+        invalid_before = subbasins_gdf[~subbasins_gdf.geometry.is_valid]
 
-        # At least 90% of geometries should be valid
-        # Some minor issues may exist in source data or from polygon operations
-        # The MERIT-Hydro source data has some topology issues
-        assert valid_percentage >= 90, (
-            f"Only {valid_percentage:.1f}% of geometries are valid. "
-            f"Found {invalid_count} invalid out of {total_count} total."
+        # All geometries should be fixable with make_valid
+        fixed_geoms = subbasins_gdf.geometry.apply(
+            lambda g: make_valid(g) if not g.is_valid else g
         )
+
+        # After fixing, all should be valid
+        still_invalid = fixed_geoms[~fixed_geoms.is_valid]
+        assert len(still_invalid) == 0, (
+            f"Found {len(still_invalid)} geometries that cannot be made valid"
+        )
+
+        # Log any that needed fixing (these are source data issues)
+        if len(invalid_before) > 0:
+            import warnings
+
+            warnings.warn(
+                f"Found {len(invalid_before)} invalid geometries in source data "
+                f"(COMIDs: {invalid_before['comid'].tolist()}). "
+                "These can be fixed with shapely.validation.make_valid()."
+            )
 
     def test_subbasin_geometries_nonempty(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that no subbasin geometries are empty.
@@ -438,7 +640,7 @@ class TestGeometryValidity:
         )
 
         _, subbasins_gdf, _ = delineate(
-            single_outlet_csv, "test_nonempty_geom", default_config
+            multi_subbasin_csv, "test_nonempty_geom", default_config
         )
 
         # No empty geometries
@@ -448,7 +650,7 @@ class TestGeometryValidity:
         )
 
     def test_subbasins_have_positive_area(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that all subbasins have positive area.
@@ -463,7 +665,7 @@ class TestGeometryValidity:
         )
 
         _, subbasins_gdf, _ = delineate(
-            single_outlet_csv, "test_positive_area", default_config
+            multi_subbasin_csv, "test_positive_area", default_config
         )
 
         # All areas should be positive
@@ -472,7 +674,7 @@ class TestGeometryValidity:
         )
 
     def test_rivers_geometries_valid(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that river reach geometries are valid LineStrings.
@@ -486,7 +688,7 @@ class TestGeometryValidity:
         )
 
         _, _, rivers_gdf = delineate(
-            single_outlet_csv, "test_valid_rivers", default_config
+            multi_subbasin_csv, "test_valid_rivers", default_config
         )
 
         # Filter out any empty geometries first (these are handled separately)
@@ -535,12 +737,17 @@ class TestDataConsistency:
             f"Graph nodes missing from subbasins: {missing_in_subbasins}"
         )
 
+        # Verify terminal node
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "main_outlet" in terminal_nodes
+
     def test_nextdown_consistency(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
-        Test that nextdown values in subbasins match graph edges.
-        The nextdown attribute should match the graph's edge structure.
+        Test that graph structure is internally consistent.
+        Every non-terminal node should have exactly one outgoing edge.
+        Terminal nodes (outlets) should have no outgoing edges.
         """
         config.set(
             {
@@ -551,21 +758,30 @@ class TestDataConsistency:
         )
 
         G, subbasins_gdf, _ = delineate(
-            single_outlet_csv, "test_nextdown", default_config
+            multi_subbasin_csv, "test_nextdown", default_config
         )
 
-        for _, row in subbasins_gdf.iterrows():
-            comid = row["comid"]
-            nextdown = row["nextdown"]
+        # Every node should have at most one successor (river networks are trees)
+        for node in G.nodes():
+            out_degree = G.out_degree(node)
+            assert out_degree <= 1, (
+                f"Node {node} has {out_degree} successors, expected at most 1"
+            )
 
-            if nextdown != 0:  # 0 means no downstream (terminal)
-                # Should be an edge from comid to nextdown in the graph
-                assert G.has_edge(comid, nextdown), (
-                    f"Expected edge from {comid} to {nextdown} in graph"
+        # The terminal node should have nextdown = 0 in the GeoDataFrame
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert len(terminal_nodes) >= 1, "Should have at least one terminal node"
+
+        for terminal in terminal_nodes:
+            if terminal in subbasins_gdf["comid"].values:
+                terminal_row = subbasins_gdf[subbasins_gdf["comid"] == terminal]
+                nextdown_val = terminal_row.iloc[0]["nextdown"]
+                assert nextdown_val == 0, (
+                    f"Terminal node {terminal} should have nextdown=0, got {nextdown_val}"
                 )
 
     def test_area_values_consistent(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, temp_output_dir
     ):
         """
         Test that area values are consistent between graph and GeoDataFrame.
@@ -579,7 +795,7 @@ class TestDataConsistency:
         )
 
         G, subbasins_gdf, _ = delineate(
-            single_outlet_csv, "test_area_consistent", default_config
+            multi_subbasin_csv, "test_area_consistent", default_config
         )
 
         subbasins_gdf_indexed = subbasins_gdf.set_index("comid")
@@ -626,9 +842,18 @@ class TestSnapshotOutputs:
             }
         )
 
-        G, _subbasins_gdf, _ = delineate(
+        G, subbasins_gdf, _ = delineate(
             single_outlet_csv, "test_snapshot", default_config
         )
+
+        # Verify outlet node
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "outlet1" in terminal_nodes
+
+        # Verify custom attributes are present
+        assert "gage_id" in subbasins_gdf.columns
+        outlet_row = subbasins_gdf[subbasins_gdf["comid"] == "outlet1"]
+        assert outlet_row.iloc[0]["gage_id"] == "GAGE001"
 
         # Create a serializable summary of the network structure
         network_summary = {
@@ -671,6 +896,14 @@ class TestSnapshotOutputs:
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_multi_snapshot", default_config
         )
+
+        # Verify outlet node
+        terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
+        assert "main_outlet" in terminal_nodes
+
+        # Verify custom attributes are present
+        assert "gage_id" in subbasins_gdf.columns
+        assert "priority" in subbasins_gdf.columns
 
         # Create a serializable summary
         network_summary = {

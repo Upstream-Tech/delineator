@@ -43,11 +43,12 @@ def single_outlet_csv(tmp_path):
     """
     Create a CSV file with a single outlet point.
     Uses a location in Iceland (megabasin 27) for testing.
+    Includes custom columns to verify they're passed through to the graph.
     """
     csv_path = tmp_path / "single_outlet.csv"
     csv_path.write_text(
-        "id,lng,lat,name,outlet_id\n"
-        "outlet1,-14.36201,65.50253,Lagarfljot River at Lagarfoss,outlet1\n"
+        "id,lng,lat,name,outlet_id,gage_id,priority\n"
+        "outlet1,-14.36201,65.50253,Lagarfljot River at Lagarfoss,outlet1,GAGE001,high\n"
     )
     return str(csv_path)
 
@@ -57,13 +58,14 @@ def multi_subbasin_csv(tmp_path):
     """
     Create a CSV file with an outlet and upstream subbasin points.
     This tests the subbasin delineation capability.
+    Includes custom columns (gage_id, priority) to verify they're passed through.
     """
     csv_path = tmp_path / "multi_subbasin.csv"
     csv_path.write_text(
-        "id,lng,lat,name,outlet_id\n"
-        "main_outlet,-14.36201,65.50253,Lagarfljot River at Lagarfoss,main_outlet\n"
-        "upstream1,-15.0883,64.9839,Jokulsa I River at Fljotsdal Holl,main_outlet\n"
-        "upstream2,-14.533,65.14,Gringa Dam,main_outlet\n"
+        "id,lng,lat,name,outlet_id,gage_id,priority\n"
+        "main_outlet,-14.36201,65.50253,Lagarfljot River at Lagarfoss,main_outlet,GAGE001,high\n"
+        "upstream1,-15.0883,64.9839,Jokulsa I River at Fljotsdal Holl,main_outlet,GAGE002,medium\n"
+        "upstream2,-14.533,65.14,Gringa Dam,main_outlet,GAGE003,low\n"
     )
     return str(csv_path)
 
@@ -77,8 +79,27 @@ def headwater_outlet_csv(tmp_path):
     csv_path = tmp_path / "headwater.csv"
     # A point near the headwaters of a small stream in Iceland
     csv_path.write_text(
-        "id,lng,lat,name,outlet_id\n"
-        "headwater,-15.186,64.735,Lake Sauoarvatr outlet,headwater\n"
+        "id,lng,lat,name,outlet_id,gage_id,priority\n"
+        "headwater,-15.186,64.735,Lake Sauoarvatr outlet,headwater,GAGE_HW,high\n"
+    )
+    return str(csv_path)
+
+
+@pytest.fixture
+def disconnected_basins_csv(tmp_path):
+    """
+    Create a CSV file with two separate, disconnected watersheds.
+    Each outlet_id defines a separate river system that should result
+    in independent subgraphs in the final network.
+    """
+    csv_path = tmp_path / "disconnected_basins.csv"
+    csv_path.write_text(
+        "id,lng,lat,name,outlet_id,gage_id,priority\n"
+        # First watershed - Lagarfljot system
+        "basin1_outlet,-14.36201,65.50253,Lagarfljot River at Lagarfoss,basin1_outlet,GAGE_B1,high\n"
+        "basin1_upstream,-14.533,65.14,Gringa Dam,basin1_outlet,GAGE_B1U,medium\n"
+        # Second watershed - separate system near headwaters
+        "basin2_outlet,-15.186,64.735,Lake Sauoarvatr outlet,basin2_outlet,GAGE_B2,high\n"
     )
     return str(csv_path)
 
