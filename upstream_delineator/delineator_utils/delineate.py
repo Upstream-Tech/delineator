@@ -250,7 +250,7 @@ def get_watershed(
         gages_gdf, gage_catchments_gdf, how="intersection", make_valid=True
     )
     gages_gdf.set_index("id", inplace=True)
-    gages_gdf.set_crs(crs=PROJ_WGS84)
+    gages_gdf.set_crs(crs=PROJ_WGS84, inplace=True)
 
     # For any gages for which we could not find a unit catchment, add issue a warning
     # Basically checking which rows do not appear after doing the overlay
@@ -288,9 +288,10 @@ def get_watershed(
     subbasins_gdf = catchments_gdf.loc[upstream_comids]
     # Add lat, lng, and NextDownID to subbasins_gdf.
     subbasins_gdf = subbasins_gdf.join(rivers_gdf[["lat", "lng", "NextDownID"]])
-    # Re-name the NextDownID field, and make sure it is an integer
+    # Re-name the NextDownID field. Use object dtype to support mixed int/string IDs
+    # (COMIDs are integers but custom outlet IDs may be strings)
     subbasins_gdf.rename(columns={"NextDownID": "nextdown"}, inplace=True)
-    subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(int)
+    subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(object)
     subbasins_gdf["custom"] = (
         False  # Adds a column that shows whether a subbasin is connected to a custom pour point
     )
@@ -319,7 +320,7 @@ def get_watershed(
 
     # For now, put the split polygon geometry into a field in `gages_gdf`
     gages_gdf["polygon"] = None
-    gages_gdf["polygon_area"] = 0
+    gages_gdf["polygon_area"] = 0.0  # Use float to allow fractional areas
 
     # Iterate over the gages, and run `split_catchment()` for every gage
     for gage_id in gages_gdf.index:
@@ -452,7 +453,9 @@ def get_watershed(
         # After the dissolve operation, no way to preserve correct information in column 'nextdown'
         # But it is present in the Graph, so update the GeoDataFrame subbasins_gdf with that information
         # Add column `nextdownid` and the stream orders based on data in the graph
-        subbasins_gdf["nextdown"] = 0
+        # Use object dtype to support mixed int/string IDs
+        subbasins_gdf["nextdown"] = None
+        subbasins_gdf["nextdown"] = subbasins_gdf["nextdown"].astype(object)
 
         for idx in subbasins_gdf.index:
             try:
@@ -490,6 +493,9 @@ def get_watershed(
         pass  # TODO why are we catching all exceptions?
 
     # Add the fields `nextdown` and the stream orders to the rivers.
+    # Initialize nextdown as object dtype to support mixed int/string IDs
+    myrivers_gdf["nextdown"] = None
+    myrivers_gdf["nextdown"] = myrivers_gdf["nextdown"].astype(object)
     for idx in myrivers_gdf.index:
         try:
             nextdown = next(iter(G.successors(idx)))
@@ -575,17 +581,15 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
         "polygon": "geometry",
     }
     gages_gdf.rename(columns=rnmap, inplace=True)
-    gages_gdf.set_crs(crs=PROJ_WGS84)
-    gages_gdf.set_geometry(col="geometry")
+    gages_gdf = gages_gdf.set_geometry(col="geometry")
+    gages_gdf.set_crs(crs=PROJ_WGS84, inplace=True)
     # First, handle the gages where there is only one gage in a unit catchment (standard treatment)
     # The new unit catchments (or nodes in the network) will always be upstream of the unit catchment
     # that we are inserting it into
     #  insert these rows into `subbasins_gdf`
     if len(singles) > 0:
-        selected_rows = gages_gdf[gages_gdf["COMID"].isin(singles)]
-        selected_rows.set_crs(
-            crs=PROJ_WGS84
-        )  # Just needed to eliminate an annoying warning
+        selected_rows = gages_gdf[gages_gdf["COMID"].isin(singles)].copy()
+        selected_rows.set_crs(crs=PROJ_WGS84, inplace=True)
 
         # This creates the dictionary `new_nodes` that maps gage id : unit catchment comid
         new_nodes = selected_rows["COMID"].to_dict()
@@ -633,8 +637,8 @@ def update_split_catchment_geo(gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gd
     # (Note: It is not really possible to understand the following code without a picture of what it is doing!!!)
     for comid in repeats:
         # Find all the gages that fall in this unit catchment.
-        gages_set = gages_gdf[gages_gdf["COMID"] == comid]
-        gages_set.set_crs(crs=PROJ_WGS84)
+        gages_set = gages_gdf[gages_gdf["COMID"] == comid].copy()
+        gages_set.set_crs(crs=PROJ_WGS84, inplace=True)
         # We want to handle these in order from downstream to upstream.
         # This is the same as largest area to smallest area
         gages_set.sort_values(by="unitarea", inplace=True)

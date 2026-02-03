@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 import warnings
-from functools import cache, partial
+from functools import cache
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -190,7 +190,7 @@ def calc_area(poly: Polygon) -> float:
     """
     Calculates the approximate area of a Shapely polygon in raw lat, lng coordinates (CRS=4326)
     First projects it into the Albers Equal Area projection to facilitate calculation.
-    No
+
     Args:
         poly: Shapely polygon
     Returns:
@@ -199,14 +199,13 @@ def calc_area(poly: Polygon) -> float:
     if poly.is_empty:
         return 0
 
-    projected_poly = shapely.ops.transform(
-        partial(
-            pyproj.transform,
-            pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(proj="aea", lat_1=poly.bounds[1], lat_2=poly.bounds[3]),
-        ),
-        poly,
+    # Use modern pyproj API with Transformer instead of deprecated transform function
+    crs_wgs84 = pyproj.CRS(PROJ_WGS84)
+    crs_aea = pyproj.CRS.from_proj4(
+        f"+proj=aea +lat_1={poly.bounds[1]} +lat_2={poly.bounds[3]}"
     )
+    transformer = pyproj.Transformer.from_crs(crs_wgs84, crs_aea, always_xy=True)
+    projected_poly = shapely.ops.transform(transformer.transform, poly)
 
     # Get the area in m^2
     return projected_poly.area / 1e6
@@ -225,16 +224,15 @@ def calc_length(line: LineString) -> float:
     if line.is_empty:
         return 0
 
-    projected_line = shapely.ops.transform(
-        partial(
-            pyproj.transform,
-            pyproj.Proj(init=PROJ_WGS84),
-            pyproj.Proj(proj="aea", lat_1=line.bounds[1], lat_2=line.bounds[3]),
-        ),
-        line,
+    # Use modern pyproj API with Transformer instead of deprecated transform function
+    crs_wgs84 = pyproj.CRS(PROJ_WGS84)
+    crs_aea = pyproj.CRS.from_proj4(
+        f"+proj=aea +lat_1={line.bounds[1]} +lat_2={line.bounds[3]}"
     )
+    transformer = pyproj.Transformer.from_crs(crs_wgs84, crs_aea, always_xy=True)
+    projected_line = shapely.ops.transform(transformer.transform, line)
 
-    # Get the area in m^2
+    # Get the length in m
     return projected_line.length / 1e3
 
 
