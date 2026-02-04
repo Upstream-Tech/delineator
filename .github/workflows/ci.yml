@@ -25,13 +25,19 @@ jobs:
       - name: Run ruff formatter check
         run: uv run ruff format --check
 
-      - name: Cache test hydrology data
-        uses: actions/cache@v4
+      - name: Restore test hydrology data cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
         with:
           path: .test_cache
-          key: test-hydrology-data-v1
-          restore-keys: |
-            test-hydrology-data-
+          key: test-hydrology-data-v2
 
       - name: Run tests
         run: uv run pytest
+
+      - name: Save test hydrology data cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .test_cache
+          key: test-hydrology-data-v2
