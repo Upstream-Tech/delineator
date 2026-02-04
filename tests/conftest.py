@@ -5,9 +5,17 @@ This module sets up the environment variables needed to access remote hydrology 
 and provides common fixtures used across test modules.
 
 Test Performance Optimizations:
-- Uses a persistent cache directory for downloaded data that persists across test runs
-- The cache directory can be shared in CI using GitHub Actions cache
+- Uses a persistent cache directory for downloaded hydrology data (.test_cache/)
+  that persists across test runs, avoiding re-downloads (~85MB of data)
+- The cache directory is preserved in CI using GitHub Actions cache
 - Test outputs still use temporary directories that are cleaned up after tests
+- Session-scoped fixtures (shared_*_result) are available for sharing expensive
+  delineation results across multiple tests (for future optimization)
+
+Cache Management:
+- To clear the local cache: rm -rf .test_cache/
+- CI cache key: test-hydrology-data-v1 (increment version to invalidate)
+- Set TEST_CACHE_DIR environment variable to override cache location
 """
 
 import os
