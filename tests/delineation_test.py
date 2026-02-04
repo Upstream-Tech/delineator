@@ -30,19 +30,13 @@ class TestBasicDelineation:
         config.set(default_config)
 
     def test_single_outlet_delineation_runs_without_error(
-        self, single_outlet_csv, default_config, temp_output_dir
+        self, single_outlet_csv, default_config
     ):
         """
         Test that a single outlet delineation completes without errors.
         This is the most basic smoke test for the delineation workflow.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, rivers_gdf = delineate(
             single_outlet_csv, "test_single", default_config
@@ -67,20 +61,12 @@ class TestBasicDelineation:
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert "outlet1" in terminal_nodes, "outlet1 should be a terminal node"
 
-    def test_multi_subbasin_delineation(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_multi_subbasin_delineation(self, multi_subbasin_csv, default_config):
         """
         Test delineation with multiple subbasin outlets.
         Verifies that upstream points are correctly assigned to subbasins.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _rivers_gdf = delineate(
             multi_subbasin_csv, "test_multi", default_config
@@ -104,20 +90,12 @@ class TestBasicDelineation:
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert "main_outlet" in terminal_nodes, "main_outlet should be a terminal node"
 
-    def test_headwater_outlet_delineation(
-        self, headwater_outlet_csv, default_config, temp_output_dir
-    ):
+    def test_headwater_outlet_delineation(self, headwater_outlet_csv, default_config):
         """
         Test delineation at a headwater location.
         Headwaters are leaf catchments with no upstream neighbors.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _rivers_gdf = delineate(
             headwater_outlet_csv, "test_headwater", default_config
@@ -142,20 +120,12 @@ class TestNetworkTopology:
         """Reset config before each test."""
         config.set(default_config)
 
-    def test_graph_is_directed_acyclic(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_graph_is_directed_acyclic(self, multi_subbasin_csv, default_config):
         """
         Test that the river network graph is a directed acyclic graph (DAG).
         River networks should flow downstream without cycles.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, _, _ = delineate(multi_subbasin_csv, "test_dag", default_config)
 
@@ -166,20 +136,12 @@ class TestNetworkTopology:
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert "main_outlet" in terminal_nodes, "main_outlet should be a terminal node"
 
-    def test_single_terminal_node(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_single_terminal_node(self, multi_subbasin_csv, default_config):
         """
         Test that the network has exactly one terminal (outlet) node.
         The terminal node is the one with no outgoing edges.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, _, _ = delineate(multi_subbasin_csv, "test_terminal", default_config)
 
@@ -188,20 +150,12 @@ class TestNetworkTopology:
         assert len(terminal_nodes) == 1, "Should have exactly one terminal node"
         assert terminal_nodes[0] == "main_outlet", "Terminal node should be main_outlet"
 
-    def test_outlet_node_attributes_from_csv(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_outlet_node_attributes_from_csv(self, multi_subbasin_csv, default_config):
         """
         Test that custom attributes from CSV are present in the graph nodes.
         Verifies that gage_id, priority, and other custom columns are accessible.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_attrs", default_config
@@ -231,20 +185,12 @@ class TestNetworkTopology:
         assert upstream1_row.iloc[0]["gage_id"] == "GAGE002"
         assert upstream1_row.iloc[0]["priority"] == "medium"
 
-    def test_stream_orders_assigned(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_stream_orders_assigned(self, multi_subbasin_csv, default_config):
         """
         Test that Strahler and Shreve stream orders are calculated.
         These are fundamental hydrologic properties of river networks.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_orders", default_config
@@ -273,22 +219,14 @@ class TestNetworkTopology:
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert "main_outlet" in terminal_nodes
 
-    def test_strahler_order_properties(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_strahler_order_properties(self, multi_subbasin_csv, default_config):
         """
         Test that Strahler stream order follows correct rules:
         - Headwaters (no upstream) have order 1
         - When two streams of same order meet, result is order + 1
         - When streams of different orders meet, result is max order
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, _, _ = delineate(multi_subbasin_csv, "test_strahler", default_config)
 
@@ -316,21 +254,13 @@ class TestNetworkTopology:
                     f"got {actual_order}"
                 )
 
-    def test_shreve_order_properties(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_shreve_order_properties(self, multi_subbasin_csv, default_config):
         """
         Test that Shreve stream order follows correct rules:
         - Headwaters have order 1
         - Order increases downstream (sum of upstream orders)
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, _, _ = delineate(multi_subbasin_csv, "test_shreve", default_config)
 
@@ -363,19 +293,13 @@ class TestDisconnectedBasins:
         config.set(default_config)
 
     def test_disconnected_basins_separate_systems(
-        self, disconnected_basins_csv, default_config, temp_output_dir
+        self, disconnected_basins_csv, default_config
     ):
         """
         Test that two separate outlets create two disconnected river systems.
         Each outlet_id in the CSV should correspond to an independent watershed.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             disconnected_basins_csv, "test_disconnected", default_config
@@ -411,19 +335,13 @@ class TestDisconnectedBasins:
         assert basin1_row.iloc[0]["gage_id"] == "GAGE_B1"
 
     def test_disconnected_basins_upstream_connectivity(
-        self, disconnected_basins_csv, default_config, temp_output_dir
+        self, disconnected_basins_csv, default_config
     ):
         """
         Test that upstream points are correctly connected to their respective outlets.
         basin1_upstream should flow to basin1_outlet, not basin2_outlet.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, _, _ = delineate(
             disconnected_basins_csv, "test_disconnected_connectivity", default_config
@@ -464,32 +382,20 @@ class TestConsolidation:
         config.set(consolidate_config)
 
     def test_consolidation_reduces_nodes(
-        self, multi_subbasin_csv, default_config, consolidate_config, temp_output_dir
+        self, multi_subbasin_csv, default_config, consolidate_config
     ):
         """
         Test that consolidation reduces the number of nodes in the network.
         Consolidation merges small unit catchments to create larger subbasins.
         """
         # First, delineate without consolidation
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
         G_original, _, _ = delineate(
             multi_subbasin_csv, "test_no_consol", default_config
         )
 
         # Then, delineate with consolidation
-        config.set(
-            {
-                **consolidate_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(consolidate_config)
         G_consolidated, _, _ = delineate(
             multi_subbasin_csv, "test_consol", consolidate_config
         )
@@ -508,19 +414,13 @@ class TestConsolidation:
         assert "main_outlet" in terminal_nodes
 
     def test_consolidation_preserves_custom_nodes(
-        self, multi_subbasin_csv, consolidate_config, temp_output_dir
+        self, multi_subbasin_csv, consolidate_config
     ):
         """
         Test that consolidation preserves user-specified outlet points.
         Custom nodes should not be merged away during consolidation.
         """
-        config.set(
-            {
-                **consolidate_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(consolidate_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_custom_preserved", consolidate_config
@@ -539,19 +439,13 @@ class TestConsolidation:
         assert main_outlet_row.iloc[0]["gage_id"] == "GAGE001"
 
     def test_consolidation_maintains_connectivity(
-        self, multi_subbasin_csv, consolidate_config, temp_output_dir
+        self, multi_subbasin_csv, consolidate_config
     ):
         """
         Test that consolidation maintains network connectivity.
         The graph should still be connected and acyclic after consolidation.
         """
-        config.set(
-            {
-                **consolidate_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(consolidate_config)
 
         G, _, _ = delineate(multi_subbasin_csv, "test_connectivity", consolidate_config)
 
@@ -576,9 +470,7 @@ class TestGeometryValidity:
         """Reset config before each test."""
         config.set(default_config)
 
-    def test_subbasin_geometries_valid(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_subbasin_geometries_valid(self, multi_subbasin_csv, default_config):
         """
         Test that all subbasin geometries are valid polygons.
         Invalid geometries can cause problems in downstream GIS analysis.
@@ -588,13 +480,7 @@ class TestGeometryValidity:
         """
         from shapely.validation import make_valid
 
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         _, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_valid_geom", default_config
@@ -624,20 +510,12 @@ class TestGeometryValidity:
                 "These can be fixed with shapely.validation.make_valid()."
             )
 
-    def test_subbasin_geometries_nonempty(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_subbasin_geometries_nonempty(self, multi_subbasin_csv, default_config):
         """
         Test that no subbasin geometries are empty.
         Every subbasin should have a polygon representing its contributing area.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         _, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_nonempty_geom", default_config
@@ -649,20 +527,12 @@ class TestGeometryValidity:
             f"Found {len(empty_geoms)} empty subbasin geometries"
         )
 
-    def test_subbasins_have_positive_area(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_subbasins_have_positive_area(self, multi_subbasin_csv, default_config):
         """
         Test that all subbasins have positive area.
         Area is a key attribute for hydrologic modeling.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         _, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_positive_area", default_config
@@ -673,19 +543,11 @@ class TestGeometryValidity:
             "All subbasins should have positive area"
         )
 
-    def test_rivers_geometries_valid(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_rivers_geometries_valid(self, multi_subbasin_csv, default_config):
         """
         Test that river reach geometries are valid LineStrings.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         _, _, rivers_gdf = delineate(
             multi_subbasin_csv, "test_valid_rivers", default_config
@@ -709,20 +571,12 @@ class TestDataConsistency:
         """Reset config before each test."""
         config.set(default_config)
 
-    def test_graph_subbasins_correspondence(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_graph_subbasins_correspondence(self, multi_subbasin_csv, default_config):
         """
         Test that graph nodes correspond to subbasins in the GeoDataFrame.
         Every node in the graph should have a corresponding subbasin.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_correspondence", default_config
@@ -741,21 +595,13 @@ class TestDataConsistency:
         terminal_nodes = [n for n in G.nodes() if G.out_degree(n) == 0]
         assert "main_outlet" in terminal_nodes
 
-    def test_nextdown_consistency(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_nextdown_consistency(self, multi_subbasin_csv, default_config):
         """
         Test that graph structure is internally consistent.
         Every non-terminal node should have exactly one outgoing edge.
         Terminal nodes (outlets) should have no outgoing edges.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_nextdown", default_config
@@ -780,19 +626,11 @@ class TestDataConsistency:
                     f"Terminal node {terminal} should have nextdown=0, got {nextdown_val}"
                 )
 
-    def test_area_values_consistent(
-        self, multi_subbasin_csv, default_config, temp_output_dir
-    ):
+    def test_area_values_consistent(self, multi_subbasin_csv, default_config):
         """
         Test that area values are consistent between graph and GeoDataFrame.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_area_consistent", default_config
@@ -827,20 +665,13 @@ class TestSnapshotOutputs:
         self,
         single_outlet_csv,
         default_config,
-        temp_output_dir,
         snapshot_json,
     ):
         """
         Snapshot test for network structure of single outlet delineation.
         Captures the essential topology of the delineated watershed.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             single_outlet_csv, "test_snapshot", default_config
@@ -879,19 +710,12 @@ class TestSnapshotOutputs:
         self,
         multi_subbasin_csv,
         default_config,
-        temp_output_dir,
         snapshot_json,
     ):
         """
         Snapshot test for multi-subbasin delineation structure.
         """
-        config.set(
-            {
-                **default_config,
-                "OUTPUT_DIR": str(temp_output_dir),
-                "CACHE_DIR": str(temp_output_dir / "cache"),
-            }
-        )
+        config.set(default_config)
 
         G, subbasins_gdf, _ = delineate(
             multi_subbasin_csv, "test_multi_snapshot", default_config
