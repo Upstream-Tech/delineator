@@ -278,9 +278,8 @@ def get_watershed(
     for id in gage_list:
         comid = gages_gdf.at[id, "COMID"]
         if comid not in upstream_comids:
-            gages_gdf.drop(id, inplace=True)
-            raise Warning(
-                f"The point with id = {id} is not contained in the watershed of the first point."
+            raise ValueError(
+                f"{gages_gdf.loc[id]['name']} is not in the watershed that drains to {gages_gdf.loc[id]['outlet_name']}. Please check locations and amend as needed."
             )
 
     # subbasins_gdf is the set of unit catchments in our watershed. This will ultimately become our output
@@ -347,6 +346,26 @@ def get_watershed(
     subbasins_gdf = update_split_catchment_geo(
         gages_gdf, myrivers_gdf, rivers_gdf, subbasins_gdf
     )
+
+    # Sanity check: the designated outlet must be the most downstream point in the basin.
+    # After splitting, the outlet is the only node that should still drain into the terminal
+    # unit catchment. If any *other* user point drains into it, that point lies downstream of
+    # the designated outlet -- almost always because outlet_id was set to the
+    # second-to-most-downstream location by mistake.
+    drains_into_terminal = [
+        node
+        for node in subbasins_gdf.index[subbasins_gdf["nextdown"] == terminal_comid]
+        if node != terminal_node_id
+    ]
+    if drains_into_terminal:
+        true_outlet = drains_into_terminal[0]
+        true_outlet_name = gages_gdf.loc[true_outlet]["name"]
+        terminal_node_name = gages_gdf.loc[terminal_node_id]["name"]
+
+        raise ValueError(
+            f"Delineation found {true_outlet_name} to be downstream of the basin outlet set by the user ({terminal_node_name}). "
+            f"Please check that this is correct, and if so, update 'outlet_name' for all points in this basin from {terminal_node_name} to {true_outlet_name}."
+        )
 
     # Now, we no longer need the downstream portion of the terminal unit catchment
     # so remove its row from the subbasins GeoDataFrame
