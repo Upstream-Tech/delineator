@@ -278,8 +278,10 @@ def get_watershed(
     for id in gage_list:
         comid = gages_gdf.at[id, "COMID"]
         if comid not in upstream_comids:
+            location_name = gages_gdf.loc[id].get("name")
+            outlet_name = gages_gdf.loc[id].get("outlet_name")
             raise ValueError(
-                f"{gages_gdf.loc[id]['name']} is not in the watershed that drains to {gages_gdf.loc[id]['outlet_name']}. Please check locations and amend as needed."
+                f"{location_name or id} is not in the watershed that drains to {outlet_name or gages_gdf.loc[id]['outlet_id']}. Please check locations and amend as needed."
             )
 
     # subbasins_gdf is the set of unit catchments in our watershed. This will ultimately become our output
@@ -359,8 +361,10 @@ def get_watershed(
     ]
     if drains_into_terminal:
         true_outlet = drains_into_terminal[0]
-        true_outlet_name = gages_gdf.loc[true_outlet]["name"]
-        terminal_node_name = gages_gdf.loc[terminal_node_id]["name"]
+        true_outlet_name = gages_gdf.loc[true_outlet].get("name") or true_outlet
+        terminal_node_name = (
+            gages_gdf.loc[terminal_node_id].get("name") or terminal_node_id
+        )
 
         raise ValueError(
             f"Delineation found {true_outlet_name} to be downstream of the basin outlet set by the user ({terminal_node_name}). "
