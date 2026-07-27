@@ -333,13 +333,43 @@ def http_session():
 
 
 def download_if_missing(url: str, local_path: str):
-    if not os.path.isfile(local_path):
-        if config.get("VERBOSE"):
-            print(f"Downloading file {url}")
-        with http_session().get(url, stream=True, timeout=10) as response:
+    """
+    Download a file if it doesn't exist or is empty/corrupted.
+
+    Uses atomic writes (temp file + rename) to prevent partial downloads
+    from being cached as valid files.
+    """
+    # Check if file exists AND has content (size > 0)
+    if os.path.isfile(local_path) and os.path.getsize(local_path) > 0:
+        return
+
+    if config.get("VERBOSE"):
+        print(f"Downloading file {url}")
+
+    # Use a temporary file for atomic download
+    temp_path = local_path + ".tmp"
+    try:
+        with http_session().get(url, stream=True, timeout=30) as response:
             response.raise_for_status()
-            with open(local_path, "wb") as file:
-                file.writelines(response.iter_content(chunk_size=None))
+            with open(temp_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        file.write(chunk)
+
+        # Verify download succeeded (file has content)
+        if os.path.getsize(temp_path) == 0:
+            raise ValueError(f"Downloaded file is empty: {url}")
+
+        # Atomic rename - only replace if download succeeded
+        os.replace(temp_path, local_path)
+    except Exception:
+        # Clean up temp file on failure
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        # Also remove any 0-byte cached file
+        if os.path.isfile(local_path) and os.path.getsize(local_path) == 0:
+            os.remove(local_path)
+        raise
 
 
 def load_gdf(geotype: str, basin: int) -> gpd.GeoDataFrame:

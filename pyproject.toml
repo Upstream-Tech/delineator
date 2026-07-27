@@ -30,6 +30,7 @@ dev = [
     "pytest~=9.0",
     "pytest-sugar~=1.0",
     "pytest-timeout~=2.3",
+    "pytest-xdist~=3.5",
     "syrupy~=5.0",
 ]
 

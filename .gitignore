@@ -7,6 +7,9 @@ output
 plots
 cache
 
+# Test cache (downloaded hydrology data)
+.test_cache
+
 # mise cache
 .mise.local.toml
 

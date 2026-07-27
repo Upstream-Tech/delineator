@@ -20,10 +20,24 @@ jobs:
         run: uv sync
 
       - name: Run ruff linter
-        run: uv run ruff check 
+        run: uv run ruff check
 
       - name: Run ruff formatter check
         run: uv run ruff format --check
 
+      - name: Restore test hydrology data cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .test_cache
+          key: test-hydrology-data-v2
+
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest -n auto
+
+      - name: Save test hydrology data cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .test_cache
+          key: test-hydrology-data-v2
